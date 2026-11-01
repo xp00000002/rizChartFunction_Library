@@ -115,7 +115,6 @@ rizChartFunction_Library/
 │   ├── query.md                # query 模块
 │   ├── advanced.md             # advanced 模块
 │   ├── TECHNICAL.md            # 内部实现与维护说明
-│   └── PLAN.md                 # 开发计划与进度
 │
 ├── tools/                      # 独立辅助工具
 │   ├── README.md
