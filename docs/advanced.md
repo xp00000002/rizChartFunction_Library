@@ -5,6 +5,8 @@
 `advanced.py` 提供按规格 Dict 批量插入、跨谱面复制对象、批量修改缓动和绘图的组合函数。所有函数只调用
 `base.py` / `chart.py` / `query.py` 暴露的公开函数，不直接修改谱面 dict。
 
+> 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+
 ## 使用约定
 
 - 本模块及 `advanced_copy.py` / `advanced_ease.py` / `advanced_draw.py` /
@@ -146,6 +148,12 @@ addLineByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`5/10`
+- 时间复杂度：`O(m * (p log p + p + n))`；空间复杂度：`O(sum p + sum n)`
+- 大参数提示：m 为线数，p 为线节点数，n 为 Note 数；批量插入越大越慢。
+
 ### `addLinePointByDict()`
 
 **函数声明**
@@ -191,6 +199,12 @@ addLinePointByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(m * n)`；空间复杂度：`O(1)`
+- 大参数提示：m 为输入节点数，n 为目标线节点数；逐点插入移动数组。
+
 ### `addRingPointByDict()`
 
 **函数声明**
@@ -228,6 +242,12 @@ addRingPointByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(m * c)`；空间复杂度：`O(1)`
+- 大参数提示：m 为输入数，c 为目标判定环数。
 
 ### `addLineColorByDict()`
 
@@ -267,6 +287,12 @@ addLineColorByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(m * c)`；空间复杂度：`O(1)`
+- 大参数提示：m 为输入数，c 为目标线色节点数。
+
 ### `addNoteByDict()`
 
 **函数声明**
@@ -302,6 +328,12 @@ addNoteByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(m * n)`；空间复杂度：`O(1)`
+- 大参数提示：m 为输入 Note 数，n 为目标线 Note 数。
 
 ### `addIsolatedNote()`
 
@@ -378,6 +410,12 @@ Tap / Drag / Hold。线节点和判定环均为透明色，因此辅助线本身
 - 失败时不会留下新线或部分 Note。
 - `type` 大小写不敏感；`endtime` 为 `None` 时 Hold 会失败。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：固定创建一条辅助线；Hold 跨画布时多一个尾前节点。
+
 ### `addRiztimeByDict()`
 
 **函数声明**
@@ -419,6 +457,12 @@ addRiztimeByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(m * T)`；空间复杂度：`O(1)`
+- 大参数提示：m 为输入数，T 为 Riztime 数量。
 
 ### `addBpmByDict()`
 
@@ -465,6 +509,12 @@ addBpmByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(m * V + V)`；空间复杂度：`O(V)`
+- 大参数提示：每个 BPM 变化都影响全谱高度；批量大时开销高。
 
 **示例**
 
@@ -533,6 +583,12 @@ addCanvasByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(m + K)`；空间复杂度：`O(K)`
+- 大参数提示：K 为画布关键点总数；主要成本在排序/复制关键点。
+
 ### `addCanvasPositionByDict()`
 
 **函数声明**
@@ -570,6 +626,12 @@ addCanvasPositionByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(m * V)`；空间复杂度：`O(V)`
+- 大参数提示：多次画布位置修改可能重复重算 floorPosition。
 
 ### `addCanvasSpeedByDict()`
 
@@ -609,6 +671,12 @@ addCanvasSpeedByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(m * V)`；空间复杂度：`O(V)`
+- 大参数提示：多次画布流速修改会重复影响画布高度。
+
 ### `addCameraPositionByDict()`
 
 **函数声明**
@@ -642,6 +710,12 @@ addCameraPositionByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(m * C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为摄像机关键点数；只处理局部数组。
+
 ### `addCameraScaleByDict()`
 
 **函数声明**
@@ -674,6 +748,12 @@ addCameraScaleByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(m * C)`；空间复杂度：`O(1)`
+- 大参数提示：只处理摄像机缩放局部数组。
 
 ## 复制函数
 
@@ -733,6 +813,12 @@ copyLine(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(V + K)`；空间复杂度：`O(V)`
+- 大参数提示：原子模式会在目标谱面副本上预演；大谱面复制成本高。`copymode="replace"` / `"part"` 通常会触碰更多目标线；`isFailAddAllowed=True` 会逐项预演并提交。
+
 ### `copyLinePoint()`
 
 **函数声明**
@@ -788,6 +874,12 @@ copyLinePoint(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + n)`；空间复杂度：`O(V)`
+- 大参数提示：预演/复制目标线节点；V 为目标谱面规模。
+
 ### `copyRingPoint()`
 
 **函数声明**
@@ -837,6 +929,12 @@ copyRingPoint(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + c)`；空间复杂度：`O(V)`
+- 大参数提示：预演/复制判定环节点。
+
 ### `copyLineColor()`
 
 **函数声明**
@@ -885,6 +983,12 @@ copyLineColor(sourcechart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + c)`；空间复杂度：`O(V)`
+- 大参数提示：预演/复制线色节点。
 
 ### `copyNote()`
 
@@ -936,6 +1040,12 @@ copyNote(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + n)`；空间复杂度：`O(V)`
+- 大参数提示：预演/复制 Note；大目标谱面更慢。
+
 ### `copyBpmShift()`
 
 **函数声明**
@@ -985,6 +1095,12 @@ copyBpmShift(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：复制 BPM 后执行全谱 refresh。
+
 ### `copyRiztime()`
 
 **函数声明**
@@ -1032,6 +1148,12 @@ copyRiztime(sourcechart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + T)`；空间复杂度：`O(V)`
+- 大参数提示：预演目标谱面并复制 Riztime。
 
 ### `copyCanvas()`
 
@@ -1083,6 +1205,12 @@ copyCanvas(sourcechart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：复制画布及关键点；大画布更慢。
 
 ### `copyCanvasPosition()`
 
@@ -1136,6 +1264,12 @@ copyCanvasPosition(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：预演目标画布位置并复制关键点。
+
 ### `copyCanvasSpeed()`
 
 **函数声明**
@@ -1186,6 +1320,12 @@ copyCanvasSpeed(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：流速复制可能触发画布高度重算。
+
 ### `copyCamera()`
 
 **函数声明**
@@ -1233,6 +1373,12 @@ copyCamera(sourcechart: dict, targetchart: dict | None = None,
 **返回值**
 
 成功返回 `[]`；所有失败返回 `[0]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：预演并复制摄像机关键点。
 
 ### `copyCameraPosition()`
 
@@ -1284,6 +1430,12 @@ copyCameraPosition(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：预演并复制摄像机位置关键点。
+
 ### `copyCameraScale()`
 
 **函数声明**
@@ -1330,6 +1482,12 @@ copyCameraScale(sourcechart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
+- 大参数提示：预演并复制摄像机缩放关键点。
 
 ## 缓动函数
 
@@ -1406,6 +1564,12 @@ setBpmShiftEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`9/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：k 为插入采样数；原子模式还要深复制整谱。`precision` 越小或 `inserttype` 选择采样策略时，k 通常越大；`13` / `14` 等特殊缓动通常更轻。
+
 ### `setLinePointPositionEase()`
 
 **函数声明**
@@ -1455,6 +1619,12 @@ setLinePointPositionEase(chart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：k 随 precision/插入策略增长；线节点越多越慢。
 
 ### `setLinePointColorEase()`
 
@@ -1507,6 +1677,12 @@ setLinePointColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：k 随 precision/插入策略增长；需重接节点颜色。
+
 ### `setLinePointColorByList()`
 
 **函数声明**
@@ -1552,9 +1728,18 @@ setLinePointColorByList(chart: dict, lineindex: int,
 - 谱面只保存已有节点上的颜色；节点之间由游戏/编辑器自行线性插值。
   如果节点分布稀疏，实际颜色过渡会变成较粗的分段线性效果，可能无法
   准确还原目标缓动曲线，需要自行确认节点密度。
+
+**返回值**
+
 - 成功返回 `[]`；参数非法、索引越界、颜色或 `easetype` 非法时返回 `None`。
 - 本函数不应出现部分成功；实现会先校验并计算全部目标颜色，再统一写入。
   若写入过程中发生异常，会尝试恢复已修改节点的原色。
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为区间内已有节点数；区间越长越慢，不插节点。
 
 ### `setRingColorEase()`
 
@@ -1605,6 +1790,12 @@ setRingColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：k 随 precision/插入策略增长。
+
 ### `setLineColorEase()`
 
 **函数声明**
@@ -1654,6 +1845,12 @@ setLineColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：k 随 precision/插入策略增长。
+
 ### `setCanvasPositionEase()`
 
 **函数声明**
@@ -1701,6 +1898,12 @@ setCanvasPositionEase(chart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：位置采样点数 k 影响插入和后续高度重算。
 
 ### `setCanvasSpeedEase()`
 
@@ -1751,6 +1954,12 @@ setCanvasSpeedEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(m * k + V)`；空间复杂度：`O(V + k)`
+- 大参数提示：流速采样点数 k 影响插入和画布高度重算。
+
 ### `setCameraPositionEase()`
 
 **函数声明**
@@ -1798,6 +2007,12 @@ setCameraPositionEase(chart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(m * k + C)`；空间复杂度：`O(C + k)`
+- 大参数提示：只处理摄像机关键点；k 为采样数。
 
 ### `setCameraScaleEase()`
 
@@ -1847,6 +2062,12 @@ setCameraScaleEase(chart: dict, indexlist: int | list,
 **返回值**
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(m * k + C)`；空间复杂度：`O(C + k)`
+- 大参数提示：只处理摄像机缩放关键点；k 为采样数。
 
 ## 绘图与文字函数
 
@@ -2044,6 +2265,12 @@ drawPolygon(chart: dict, canvasindex: int, pointlist: list,
 - `timemultiple` 不为有限正数时返回 `None`。
 - 整体输入非法返回 `None`。
 
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(F * P)`；空间复杂度：`O(F * P)`
+- 大参数提示：F 随 precision 变小而增大；线性填充按扫描线裁剪，径向/锥形按射线裁剪。`isFillGraph=False` 可跳过全部填充，`isDrawBorder=False` 可跳过边框层。
+
 **注意事项**
 
 - 生成线的判定环颜色统一为全透明。
@@ -2156,6 +2383,12 @@ drawEllipse(chart: dict, canvasindex: int, centerpoint: dict,
 - 生成线的判定环颜色统一为全透明。
 - 所有线创建完成后统一执行一次 `refresh(mode="all", type="all")`，重新计算 `floorPosition`。
 
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(F * P)`；空间复杂度：`O(F * P)`
+- 大参数提示：F 为填充线/边框节点数；非 90° 边框和更小 lineprecision 更慢。90° 分支只生成四条曲线，通常比非 90° 分支轻；关闭填充或边框可减少工作量。
+
 **注意事项**
 
 - `centerpoint` 的 `color` / `easeType` / `canvasIndex` 被忽略；只取 `xPosition` 和 `time`。
@@ -2200,6 +2433,12 @@ getClosedRegion(chart: dict, canvasindex: int, lineindexlist: list,
 - 每个区域按顺时针排列，起点优先取 `lineindexlist` 第一条线的第一个交点对应的点。
 - 没有闭合区域、输入非法或无法形成合法简单区域时返回 `None`。
 - 函数只读取谱面，不修改原 `chart`。
+
+**性能**
+
+- 相对开销：`9/10`
+- 时间复杂度：`O(E log E + E)`；空间复杂度：`O(E + V)`
+- 大参数提示：E 为交点/线段数；线越多、`isInsertPoint=True` 且 `precision` 越小，采样、求交和图绕行成本越高。
 
 **isCreateCrossPoint**
 
@@ -2380,6 +2619,12 @@ fontTools shapely numpy Pillow scikit-image
 - 字体缺少对应字符时返回 `None`。
 - 静态字体传入 `weight` 时使用默认字重，不报错。
 
+**性能**
+
+- 相对开销：`9/10`
+- 时间复杂度：`O(G * P + F * P + V)`；空间复杂度：`O(G * P + F * P)`
+- 大参数提示：G 为字符/组件数，P 为轮廓边数；字号、字符数和 precision 都会放大成本。`isFillGraph=False` 只画线框、`background=False` 不画背景，通常明显更轻；`bordersize` 层数也会增加线框数量。
+
 ### `drawThinText()`
 
 **函数声明**
@@ -2464,6 +2709,12 @@ fontTools shapely numpy Pillow scikit-image
 - 文本中包含换行符时返回 `None`。
 - 字体缺少对应字符时返回 `None`。
 - 静态字体传入 `weight` 时使用默认字重，不报错。
+
+**性能**
+
+- 相对开销：`9/10`
+- 时间复杂度：`O(R * I + R + V)`；空间复杂度：`O(R + V)`
+- 大参数提示：R 为栅格像素，I 为细化迭代；长文本、大字号和低 smoothness 更慢。提高 smoothness 会减少节点，但不会降低栅格化阶段的主要成本。
 
 ## 示例
 

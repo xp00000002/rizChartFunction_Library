@@ -114,6 +114,7 @@ rizChartFunction_Library/
 │   ├── chart.md                # chart 模块
 │   ├── query.md                # query 模块
 │   ├── advanced.md             # advanced 模块
+│   ├── PERFORMANCE.md          # 性能标注说明
 │   └── TECHNICAL.md            # 内部实现与维护说明
 │
 ├── tools/                      # 独立辅助工具
@@ -132,6 +133,7 @@ rizChartFunction_Library/
 - [chart 模块](docs/chart.md)
 - [query 模块](docs/query.md)
 - [advanced 模块](docs/advanced.md)
+- [性能标注说明](docs/PERFORMANCE.md)
 - [内部实现说明](docs/TECHNICAL.md)
 
 ### 工具

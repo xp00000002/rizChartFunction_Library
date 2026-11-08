@@ -13,6 +13,7 @@
 | [chart.md](chart.md) | 颜色、主题、画布、摄像机、引导线、Note、BPM 的创建与修改 |
 | [query.md](query.md) | 元数据、对象、时间、颜色、几何与计算查询 |
 | [advanced.md](advanced.md) | 按规格 Dict 批量插入、跨谱面复制、批量缓动修改与绘图的组合函数 |
+| [PERFORMANCE.md](PERFORMANCE.md) | 性能分数、复杂度符号和横向比较说明 |
 
 当前 146 个导出函数均有对应模块文档。内部实现与维护说明见
 [TECHNICAL.md](TECHNICAL.md)。

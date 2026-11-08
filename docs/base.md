@@ -4,6 +4,8 @@
 
 `base.py` 负责谱面的创建、读取、校验、导出与刷新。
 
+> 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+
 ## 目录
 
 - [`new()`](#new)
@@ -61,6 +63,12 @@ lines             list
 canvasMoves       list   默认含 index=0 的画布
 cameraMove        dict   默认含缩放与横向移动节点
 ```
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：与谱面规模无关；只创建默认结构。
 
 **示例**
 
@@ -122,6 +130,12 @@ load(filename: str, basebpm: float | None = None) -> dict | None
 - 缺少 `bPM` 且未提供 `basebpm`：`None`。
 - `bPM <= 0` 且未提供正数 `basebpm`：`None`。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：清洗、补默认值并规范化整份谱面；大谱面线性增长。
+
 **示例**
 
 ```python
@@ -176,6 +190,12 @@ export(chartlist: dict, filename: str) -> bool
 
 成功返回 `True`；结构非法、存在多余/缺失键、值越界、引用错误、路径不可写
 或 JSON 序列化失败时返回 `False`。
+
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：严格校验、清洗和比较，通常比 load 更重。
 
 **示例**
 
@@ -236,6 +256,12 @@ check(chart: dict) -> dict | None
     "errorValues": [["themes", 0, "colorsList", 2, "r"]],
 }
 ```
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：遍历整份谱面并生成校验结果；大谱面明显变慢。
 
 **示例**
 
@@ -341,6 +367,12 @@ refresh(chart: dict, mode: str = "all", type: str = "all",
 - 选中范围内有顺序或高度变化：修改谱面并返回 `True`。
 - 选中范围内无变化：返回 `False`。
 - 参数非法、结构非法或无法重算：返回 `None`。
+
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V log n)`；空间复杂度：`O(V)`
+- 大参数提示：`mode="all"` 需要重排并重算全谱 `floorPosition`；`"floorPosition"` 只重算高度，`"order"` 只重排。节点越多越慢。
 
 **示例**
 

@@ -4,6 +4,8 @@
 
 `chart.py` 负责颜色工具、主题/Riztime、画布、摄像机、引导线、Note 与 BPM 的创建和修改。
 
+> 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+
 ## 延迟计算
 
 部分修改函数支持 `isDelayCalculate: bool = False`：
@@ -114,6 +116,12 @@ setBaseBpm(chart: dict, basebpm: float, isFixedBpm: bool = False) -> object | No
 
 成功返回原 `bPM`。谱面缺少 `time=0.0` BPM 节点、结构非法、新 BPM 不为正数、固定 BPM 时缺少 `bpmShifts` 或节点非法、无法计算 `floorPosition` 等情况下返回 `None`，且不做部分修改。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：全谱 floorPosition 重算；BPM、线、Note 越多越慢。
+
 **示例**
 
 ```python
@@ -159,6 +167,12 @@ setDelay(chart: dict, delay: int) -> object | None
 
 类型不正确或其他原因无法修改时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只改单个标量。
+
 ### `setFileVersion()`
 
 **函数声明**
@@ -187,6 +201,12 @@ setFileVersion(chart: dict, fileversion: int) -> object | None
 修改 `fileVersion`，返回原值。
 
 类型不正确或其他原因无法修改时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只改单个标量。
 
 ## 颜色与主题
 
@@ -220,6 +240,12 @@ rgb(red: int | float, green: int | float, blue: int | float) -> list[int]
 
 返回 `[r, g, b, 255]`，例如 `rgb(52, 0.6, 255)` 返回 `[52, 153, 255, 255]`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：仅颜色运算。
+
 ### `rgba()`
 
 **函数声明**
@@ -250,6 +276,12 @@ rgba(red: int | float, green: int | float, blue: int | float, alpha: int | float
 **返回值**
 
 返回 `[r, g, b, a]`，例如 `rgba(52, 0.6, 255, 0.5)` 返回 `[52, 153, 255, 128]`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：仅颜色运算。
 
 ### `mixColor()`
 
@@ -292,6 +324,12 @@ A0 = A1
 **返回值**
 
 返回 `[r, g, b, a]`；输入非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：仅四通道颜色运算。
 
 **示例**
 
@@ -342,6 +380,12 @@ splitColor(mixcolor: str | list, basecolor: str | list | None = None,
 
 若 `mixcolor` 的 RGB 与覆盖色不一致，则不存在可行基础色，返回 `None`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：仅四通道颜色运算。
+
 **示例**
 
 ```python
@@ -386,6 +430,12 @@ setNormalTheme(chart: dict, color1, color2, color3) -> dict | None
 设置 `themes[0].colorsList` 的三种颜色，返回原主题的规格 Dict。
 
 格式错误、超出范围或无法修改时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只更新主题字段。
 
 **示例**
 
@@ -447,6 +497,12 @@ setRiztime(chart: dict, index: int = -1, color1=None, color2=None, color3=None,
 成功时返回原 Riztime 的合并规格 Dict。
 
 所有可选参数为 `None` 时直接 返回原规格且不做修改。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(1)`
+- 大参数提示：T 为 Riztime 数量；修改较长列表时移动/扫描增加。
 
 **示例**
 
@@ -512,6 +568,11 @@ addRiztime(chart: dict, color1, color2, color3,
 
 成功返回插入后的 `challengeTimes` 索引（从 `0` 开始）；颜色、时间、结构或顺序不合法而无法插入时返回 `None`，且不修改谱面。注意 `setRiztime()` / `deleteRiztime()` 的 `index` 使用从 `1` 开始的 Riztime 索引。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(1)`
+- 大参数提示：T 为 Riztime 数量；列表插入需要移动后续项。
 
 **示例**
 
@@ -558,6 +619,12 @@ deleteRiztime(chart: dict, index: int = -1) -> dict | None
 成功时返回被删除 Riztime 的合并规格 Dict。
 
 索引不存在、指向 Normal Theme 或无法删除时返回 `None`。
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(1)`
+- 大参数提示：T 为 Riztime 数量；列表删除需要移动后续项。
 
 **示例**
 
@@ -614,6 +681,12 @@ addCanvas(chart: dict, index: int | None = None) -> int | None
 
 结构非法、画布索引不连续或越界时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只追加一个画布。
+
 **示例**
 
 ```python
@@ -664,6 +737,12 @@ deleteCanvas(chart: dict, index: int = -1, isRelative: bool = False) -> dict | N
 成功返回被删除画布的规格 Dict。
 
 索引不存在、画布非空、结构非法或无法删除 时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(1)`
+- 大参数提示：删除画布并更新相关引用；大谱面更慢。
 
 **示例**
 
@@ -725,6 +804,11 @@ addCanvasPosition(chart: dict, index: int, time: float,
 
 成功返回插入后的关键点索引；画布或节点结构非法、时间/坐标无效时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：修改画布位置可能触发受影响 floorPosition 重算。
 
 **示例**
 
@@ -788,6 +872,12 @@ setCanvasPosition(chart: dict, canvasindex: int,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：修改画布位置可能触发受影响 floorPosition 重算。
+
 **示例**
 
 ```python
@@ -835,6 +925,12 @@ deleteCanvasPosition(chart: dict, canvasindex: int,
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：删除位置节点并重算受影响 floorPosition。
 
 **示例**
 
@@ -910,6 +1006,11 @@ addCanvasSpeed(chart: dict, index: int, time: float,
 
 成功返回插入后的关键点索引；参数、结构或画布索引非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：流速影响画布高度；关闭 isDelayCalculate 时开销更高。
 
 **示例**
 
@@ -982,6 +1083,12 @@ setCanvasSpeed(chart: dict, canvasindex: int,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：流速影响画布高度；关闭 isDelayCalculate 时开销更高。
+
 **示例**
 
 ```python
@@ -1038,6 +1145,12 @@ deleteCanvasSpeed(chart: dict, canvasindex: int,
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`6/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：删除流速节点后重算相关高度。
 
 **示例**
 
@@ -1096,6 +1209,11 @@ addCameraPosition(chart: dict, time: float, position: float = 0.0,
 
 成功返回插入后的关键点索引；参数或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为摄像机关键点数；只移动局部数组。
 
 **示例**
 
@@ -1153,6 +1271,12 @@ setCameraPosition(chart: dict, index: int = -1,
 
 索引不存在或参数非法时返回 `None`，且不修改 谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：只修改局部关键点数组。
+
 **示例**
 
 ```python
@@ -1196,6 +1320,12 @@ deleteCameraPosition(chart: dict, index: int = -1) -> dict | None
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：只移动局部关键点数组。
+
 ### `addCameraScale()`
 
 **函数声明**
@@ -1231,6 +1361,11 @@ addCameraScale(chart: dict, time: float, scale: float = 1.0,
 
 成功返回插入后的关键点索引；`scale <= 0.0`、参数或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：只移动局部关键点数组。
 
 **示例**
 
@@ -1289,6 +1424,12 @@ setCameraScale(chart: dict, index: int = -1,
 
 索引不存在、`scale <= 0.0` 或参数非法 时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：只修改局部关键点数组。
+
 ### `deleteCameraScale()`
 
 **函数声明**
@@ -1319,6 +1460,12 @@ deleteCameraScale(chart: dict, index: int = -1) -> dict | None
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(1)`
+- 大参数提示：只移动局部关键点数组。
 
 ## 引导线
 
@@ -1394,6 +1541,11 @@ addLine(chart: dict, linepointslist: list,
 
 成功返回新线的索引；失败返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(p log p + p + n + c)`；空间复杂度：`O(p + n + c)`
+- 大参数提示：p 为线节点，n 为 Note，c 为颜色节点；大线或大量 Note 时更慢。`isDelayCalculate=True` 可跳过高度计算，降低大谱面成本。
 
 **示例**
 
@@ -1482,6 +1634,12 @@ deleteLine(chart: dict, index: int = -1) -> dict | None
 
 成功返回被删除引导线的规格 Dict；谱面、`lines` 或索引非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(L)`；空间复杂度：`O(1)`
+- 大参数提示：L 为谱面线数；删除后移动 lines 数组。
+
 **示例**
 
 ```python
@@ -1558,6 +1716,12 @@ createLinePoint(time: float, xPosition: float,
 ```
 
 参数或谱面非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只构造并校验一个规格。
 
 **示例**
 
@@ -1638,6 +1802,11 @@ addLinePoint(chart: dict, time: float, xPosition: float,
 
 成功返回插入后的线节点索引；画布 x 无法计算、参数或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：n 为线节点数；插入需要移动后续节点。
 
 **示例**
 
@@ -1706,6 +1875,12 @@ setLinePoint(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：可能按时间重排节点；n 为线节点数。
+
 **示例**
 
 ```python
@@ -1744,6 +1919,12 @@ deleteLinePoint(chart: dict, lineindex: int = -1,
 **当该线只有两个或更少节点时不能删除**， 返回 `None`。
 
 索引不存在或结构非法时同样返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：n 为线节点数；删除后移动后续节点。
 
 **示例**
 
@@ -1805,6 +1986,12 @@ createRingPoint(time: float, startcolor: str | list,
 
 成功返回判定环规格 Dict；参数或谱面非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只构造一个颜色节点。
+
 **示例**
 
 ```python
@@ -1860,6 +2047,11 @@ addRingPoint(chart: dict, index: int, time: float,
 
 成功返回插入后的判定环索引；线索引、时间、颜色或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：c 为判定环节点数；局部插入。
 
 **示例**
 
@@ -1915,6 +2107,12 @@ setRingPoint(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：只修改单个判定环节点。
+
 **示例**
 
 ```python
@@ -1953,6 +2151,12 @@ deleteRingPoint(chart: dict, lineindex: int = -1,
 **该线只剩一个判定环节点时不能删除**，返回 `None`。
 
 索引不存在或结构 非法时同样返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：c 为判定环节点数；局部删除。
 
 **示例**
 
@@ -2015,6 +2219,12 @@ createLineColor(time: float, startcolor: str | list,
 
 时间、 颜色或谱面非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只构造一个颜色节点。
+
 **示例**
 
 ```python
@@ -2072,6 +2282,11 @@ addLineColor(chart: dict, index: int, time: float,
 
 成功返回插入后的线色索引；线索引、时间、颜色或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：c 为线色节点数；局部插入。
 
 **示例**
 
@@ -2127,6 +2342,12 @@ setLineColor(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：只修改单个线色节点。
+
 **示例**
 
 ```python
@@ -2167,6 +2388,12 @@ deleteLineColor(chart: dict, lineindex: int = -1,
 删除指定线色覆盖节点并返回原节点的规格 Dict。
 
 `lineColor` 为空、索引不存在或结构非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(c)`；空间复杂度：`O(1)`
+- 大参数提示：c 为线色节点数；局部删除。
 
 **示例**
 
@@ -2245,6 +2472,12 @@ createNote(time: float, type: int | str,
 ```
 
 参数或谱面非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只构造并校验一个规格。
 
 **示例**
 
@@ -2327,6 +2560,11 @@ t == p_j.time             → p_{j-1}.canvasIndex（左侧节点/前一段）
 
 成功返回插入后的 Note 索引；参数、时间范围、类型、画布或结构非法时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：n 为 Note 数；插入需要移动后续项。
 
 **示例**
 
@@ -2402,6 +2640,12 @@ setNote(chart: dict, lineindex: int = -1,
 
 失败返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：可能重排 Note；n 为 Note 数。
+
 **示例**
 
 ```python
@@ -2444,6 +2688,12 @@ deleteNote(chart: dict, lineindex: int = -1,
 删除指定 Note 并返回原 Note 的规格 Dict。
 
 `notes` 为空、索引不存在或结构非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(1)`
+- 大参数提示：删除后移动后续 Note。
 
 **示例**
 
@@ -2512,6 +2762,11 @@ addBpmShift(chart: dict, value: float, time: float,
 
 成功返回插入后的 BPM 节点索引；参数、结构或时间轴不合法时返回 `None`，且不修改谱面。相同时间的节点会插入到已有节点之后。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：插入 BPM 后全谱 floorPosition 重算；大谱面更慢。
 
 **示例**
 
@@ -2579,6 +2834,12 @@ setBpmShift(chart: dict, index: int = -1, value: float | None = None,
 
 成功返回修改前的原节点的规格 Dict；参数、结构或时间冲突导致失败时返回 `None`，且不修改谱面。
 
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：修改 BPM 后全谱 floorPosition 重算。
+
 **示例**
 
 ```python
@@ -2635,6 +2896,12 @@ deleteBpmShift(chart: dict, index: int = -1,
 成功返回被删除/被重置前的原节点的规格 Dict。
 
 索引不存在、结构非法或无法删除 时返回 `None`，且不修改谱面。
+
+**性能**
+
+- 相对开销：`7/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(V)`
+- 大参数提示：删除 BPM 后全谱 floorPosition 重算。
 
 **示例**
 

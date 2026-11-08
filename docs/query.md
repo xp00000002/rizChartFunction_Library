@@ -4,6 +4,8 @@
 
 `query.py` 负责元数据、对象、时间、颜色、几何与计算查询。
 
+> 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+
 ## 目录
 
 - [元数据与计数](#元数据与计数)
@@ -95,6 +97,12 @@ getFileVersion(chart: dict) -> int | None
 
 缺失、不是 `int` 或谱面非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读单个字段。
+
 ### `getDelay()`
 
 **函数声明**
@@ -118,6 +126,12 @@ getDelay(chart: dict) -> int | None
 返回 `chartDelayMs`（毫秒）。
 
 缺失、不是 `int` 或谱面非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读单个字段。
 
 ### `getBaseBpm()`
 
@@ -147,6 +161,12 @@ getBaseBpm(chart: dict) -> float | None
 
 缺失、非正数或结构非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读单个字段。
+
 ### `getLineCount()`
 
 **函数声明**
@@ -172,6 +192,12 @@ getLineCount(chart: dict) -> int | None
 `lines` 不是列表时返回 `None`。
 
 合法空列表返回 `0`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读数组长度。
 
 ### `getCanvasCount()`
 
@@ -199,6 +225,12 @@ getCanvasCount(chart: dict) -> int | None
 
 合法空列表返回 `0`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读数组长度。
+
 ### `getBpmShiftCount()`
 
 **函数声明**
@@ -225,6 +257,12 @@ getBpmShiftCount(chart: dict) -> int | None
 
 合法空列表 返回 `0`。
 
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读数组长度。
+
 ### `getRiztimeCount()`
 
 **函数声明**
@@ -250,6 +288,12 @@ getRiztimeCount(chart: dict) -> int | None
 结构非法时返回 `None`。
 
 合法空列表返回 `0`。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只读数组长度。
 
 **示例**
 
@@ -305,6 +349,12 @@ getNoteCount(chart: dict, startindex: int,
 **返回值**
 
 成功返回整数；失败返回 `None`。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(1)`
+- 大参数提示：需要遍历所有线及其 Note；大谱面更慢。
 
 **示例**
 
@@ -369,6 +419,12 @@ getBpmShift(chart: dict, startindex: int,
 {"time": float, "value": float, "easeType": int}
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回节点数；复制范围越大越慢。
+
 ### `getCanvas()`
 
 **函数声明**
@@ -406,6 +462,12 @@ getCanvas(chart: dict, startindex: int,
 }
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回画布数；范围越大越慢。
+
 ### `getCanvasPosition()`
 
 **函数声明**
@@ -441,6 +503,12 @@ getCanvasPosition(chart: dict, canvasindex: int,
 {"time": float, "value": float, "easeType": int}
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回关键点数。
+
 ### `getCanvasSpeed()`
 
 **函数声明**
@@ -467,6 +535,12 @@ getCanvasSpeed(chart: dict, canvasindex: int,
 **返回值**
 
 返回画布 `speedKeyPoints` 的关键点规格，不含 `floorPosition`。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回关键点数。
 
 ### `getCamera()`
 
@@ -497,6 +571,12 @@ getCamera(chart: dict) -> dict | None
 }
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回关键点数。
+
 ### `getCameraPosition()`
 
 **函数声明**
@@ -522,6 +602,12 @@ getCameraPosition(chart: dict, startindex: int,
 
 返回摄像机 `xPositionKeyPoints` 的关键点规格。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回关键点数。
+
 ### `getCameraScale()`
 
 **函数声明**
@@ -546,6 +632,12 @@ getCameraScale(chart: dict, startindex: int,
 **返回值**
 
 返回摄像机 `scaleKeyPoints` 的关键点规格。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回关键点数。
 
 ### `getLine()`
 
@@ -585,6 +677,12 @@ getLine(chart: dict, startindex: int,
 }
 ```
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回线/节点数；复制完整线时更重。
+
 ### `getLinePoint()`
 
 **函数声明**
@@ -622,6 +720,12 @@ getLinePoint(chart: dict, lineindex: int,
 }
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回节点数。
+
 ### `getRingPoint()`
 
 **函数声明**
@@ -653,6 +757,12 @@ getRingPoint(chart: dict, lineindex: int,
 {"startColor": [r, g, b, a], "endColor": [r, g, b, a], "time": float}
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回节点数。
+
 ### `getLineColor()`
 
 **函数声明**
@@ -683,6 +793,12 @@ getLineColor(chart: dict, lineindex: int,
 ```python
 {"startColor": [r, g, b, a], "endColor": [r, g, b, a], "time": float}
 ```
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回节点数。
 
 ### `getNote()`
 
@@ -719,6 +835,12 @@ getNote(chart: dict, lineindex: int,
 {"type": 2, "time": float, "endtime": float}
 ```
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(n)`；空间复杂度：`O(n)`
+- 大参数提示：n 为返回 Note 数。
+
 ### `getTheme()`
 
 **函数声明**
@@ -747,6 +869,12 @@ getTheme(chart: dict, startindex: int,
 ```python
 {"colorsList": [[r, g, b, a], [r, g, b, a], [r, g, b, a]]}
 ```
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只取主题规格。
 
 ### `getThemeColor()`
 
@@ -778,6 +906,12 @@ getThemeColor(chart: dict, themeindex: int,
 ```python
 [r, g, b, a]
 ```
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只取主题颜色。
 
 ### `getChallengeTime()`
 
@@ -812,6 +946,12 @@ getChallengeTime(chart: dict, startindex: int,
     "transTime": float,
 }
 ```
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(T)`
+- 大参数提示：T 为返回挑战时间节点数。
 
 ### `getRiztime()`
 
@@ -849,6 +989,12 @@ getRiztime(chart: dict, startindex: int,
     "transTime": float,
 }
 ```
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(T)`
+- 大参数提示：T 为返回 Riztime 节点数。
 
 ## 按时间查询
 
@@ -889,6 +1035,12 @@ getBpmShiftByTime(chart: dict, starttime: float,
 
 没有匹配返回 `[]`。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(B)`；空间复杂度：`O(n)`
+- 大参数提示：B 为 BPM 节点数；返回匹配节点。
+
 ### `getCanvasPositionByTime()`
 
 **函数声明**
@@ -925,6 +1077,12 @@ getCanvasPositionByTime(chart: dict, starttime: float,
 ```python
 [[canvasindex, pointindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(n)`
+- 大参数提示：C 为关键点数；返回匹配节点。
 
 ### `getCanvasSpeedByTime()`
 
@@ -963,6 +1121,12 @@ getCanvasSpeedByTime(chart: dict, starttime: float,
 [[canvasindex, pointindex], ...]
 ```
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(n)`
+- 大参数提示：C 为关键点数；返回匹配节点。
+
 ### `getCameraPositionByTime()`
 
 **函数声明**
@@ -998,6 +1162,12 @@ getCameraPositionByTime(chart: dict, starttime: float,
 [index, index, ...]
 ```
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(n)`
+- 大参数提示：C 为关键点数；返回匹配节点。
+
 ### `getCameraScaleByTime()`
 
 **函数声明**
@@ -1032,6 +1202,12 @@ getCameraScaleByTime(chart: dict, starttime: float,
 ```python
 [index, index, ...]
 ```
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(C)`；空间复杂度：`O(n)`
+- 大参数提示：C 为关键点数；返回匹配节点。
 
 ### `getLinePointByTime()`
 
@@ -1072,6 +1248,12 @@ getLinePointByTime(chart: dict, starttime: float,
 [[lineindex, pointindex], ...]
 ```
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：V 为全部线节点；大谱面按时间扫描更慢。
+
 ### `getRingPointByTime()`
 
 **函数声明**
@@ -1109,6 +1291,12 @@ getRingPointByTime(chart: dict, starttime: float,
 [[lineindex, ringindex], ...]
 ```
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：V 为全部判定环节点；范围越大越慢。
+
 ### `getLineColorByTime()`
 
 **函数声明**
@@ -1145,6 +1333,12 @@ getLineColorByTime(chart: dict, starttime: float,
 ```python
 [[lineindex, colorindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：V 为全部线色节点；范围越大越慢。
 
 ### `getNoteByTime()`
 
@@ -1196,6 +1390,12 @@ Note 类型：
 ```python
 [[lineindex, noteindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：V 为全部 Note；时间范围越大越慢。
 
 **示例**
 
@@ -1254,6 +1454,12 @@ getThemeByColor(chart: dict, startcolor: str | list,
 [[themeindex, colorindex], ...]
 ```
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(T)`；空间复杂度：`O(n)`
+- 大参数提示：T 为主题/挑战时间数量。
+
 ### `getLinePointByColor()`
 
 **函数声明**
@@ -1288,6 +1494,12 @@ getLinePointByColor(chart: dict, startcolor: str | list,
 ```python
 [[lineindex, pointindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：扫描全部线节点；大谱面明显变慢。
 
 ### `getRingPointByColor()`
 
@@ -1325,6 +1537,12 @@ getRingPointByColor(chart: dict, startcolor: str | list,
 ```python
 [[lineindex, ringindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：扫描全部判定环节点。
 
 ### `getLineColorByColor()`
 
@@ -1365,6 +1583,12 @@ getLineColorByColor(chart: dict, startcolor: str | list,
 ```python
 [[lineindex, colorindex], ...]
 ```
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：扫描全部线色节点。
 
 **示例**
 
@@ -1431,6 +1655,12 @@ getBaseColor(chart: dict, index: int, time: float,
 
 成功返回颜色列表 `[r, g, b, a]`；失败返回 `None`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(1)`
+- 大参数提示：按线节点/颜色节点插值；节点越多越慢。
+
 **示例**
 
 ```python
@@ -1484,6 +1714,12 @@ getCoverColor(chart: dict, index: int, time: float,
 
 成功返回颜色列表 `[r, g, b, a]`；失败返回 `None`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(1)`
+- 大参数提示：按线色覆盖节点查找/插值。
+
 **示例**
 
 ```python
@@ -1532,6 +1768,12 @@ getMixColor(chart: dict, index: int, currenttime: float,
 - `lineColor` 为空、基础色查询失败或覆盖色查询失败时返回 `None`。
 - 结果 alpha 等于基础色 alpha，覆盖色 alpha 只作为 RGB 混合系数。
 
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(1)`
+- 大参数提示：同时考虑基础色和覆盖色；大谱面更慢。
+
 **示例**
 
 ```python
@@ -1575,6 +1817,12 @@ getBpmAt(chart: dict, time: float, isRealTime: bool = False) -> float | None
 - `isRealTime=True` 时先用 BPM 时间轴把秒数换算为 tick。
 - 时间非法或 BPM 时间轴结构非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(B)`；空间复杂度：`O(1)`
+- 大参数提示：B 为 BPM 节点数；构建/查找时间轴。
+
 **示例**
 
 ```python
@@ -1617,6 +1865,12 @@ getSecondsAt(chart: dict, tick: float) -> float | None
 
 失败返回 `None`。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(B)`；空间复杂度：`O(B)`
+- 大参数提示：构建 BPM 时间轴并换算。
+
 **示例**
 
 ```python
@@ -1657,6 +1911,12 @@ getTickAt(chart: dict, seconds: float) -> float | None
 返回 BPM 时间轴上 `seconds` 对应的 tick，是 `getSecondsAt()` 的逆运算。
 
 失败返回 `None`。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(B)`；空间复杂度：`O(B)`
+- 大参数提示：构建 BPM 时间轴并换算。
 
 **示例**
 
@@ -1707,6 +1967,12 @@ getCanvasSpeedAt(chart: dict, index: int, time: float,
 
 返回画布在指定时间的流速值；时间或结构非法时返回 `None`。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(log C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为画布流速关键点数。
+
 **示例**
 
 ```python
@@ -1746,6 +2012,12 @@ getCameraPositionAt(chart: dict, time: float,
 - 早于第一个关键点或结构非法时返回 `None`；晚于最后一个关键点时保持最后值。
 - `isRealTime=True` 时先用 BPM 时间轴把秒数换算为 tick。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(log C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为摄像机位置关键点数。
+
 **示例**
 
 ```python
@@ -1783,6 +2055,12 @@ getCameraScaleAt(chart: dict, time: float,
 - 节点之间使用左侧节点的 `easeType` 插值。
 - 早于第一个关键点或结构非法时返回 `None`；晚于最后一个关键点时保持最后值。
 - `isRealTime=True` 时先用 BPM 时间轴把秒数换算为 tick。
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(log C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为摄像机缩放关键点数。
 
 **示例**
 
@@ -1834,6 +2112,12 @@ getFloorPosition(chart: dict, time: float,
 
 时间非法、谱面结构不合法或画布不存在时返回 `None`。
 
+**性能**
+
+- 相对开销：`3/10`
+- 时间复杂度：`O(B + C)`；空间复杂度：`O(V)`
+- 大参数提示：按 BPM 时间轴和画布流速计算。
+
 **示例**
 
 ```python
@@ -1880,6 +2164,12 @@ getCanvasPositionAt(chart: dict, time: float, index: int = -1,
 - 查询时间晚于最后一个关键点时，保持最后一个节点的值
 - 早于第一个关键点或结构非法时返回 `None`
 - `easeType` 不在 0-18 时返回 `None`
+
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(log C)`；空间复杂度：`O(1)`
+- 大参数提示：C 为画布位置关键点数。
 
 **示例**
 
@@ -1934,6 +2224,12 @@ getLinePosition(chart: dict, index: int, time: float,
 
 成功返回 x 坐标；`isAbsolutePosition=False` 时相对画布中线，
 `isAbsolutePosition=True` 时为绝对坐标。时间越界、结构非法或缓动非法时返回 `None`。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(log n)`；空间复杂度：`O(1)`
+- 大参数提示：n 为目标线的节点数。
 
 **示例**
 
@@ -1990,6 +2286,12 @@ getLineByPoint(chart: dict, position: float | list | None = None,
 
 返回 `[[lineindex, pointindex], ...]`；没有符合条件的节点时返回 `[]`。
 只有参数非法、画布索引非法或谱面结构损坏等查找失败情况返回 `None`。
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：扫描全部线节点；候选越多越慢。
 
 **示例**
 
@@ -2050,6 +2352,12 @@ Hold 只使用头部时间。
 返回 `[[lineindex, noteindex], ...]`；没有匹配的 Note 时返回 `[]`。
 只有参数非法、Note/线结构损坏等查找失败情况返回 `None`。
 
+**性能**
+
+- 相对开销：`5/10`
+- 时间复杂度：`O(V)`；空间复杂度：`O(n)`
+- 大参数提示：扫描全部 Note 并匹配所属线。
+
 **示例**
 
 ```python
@@ -2102,6 +2410,12 @@ getLineTimeRange(chart: dict, lineindex: int = -1,
 
 线不存在、 线节点结构非法或秒数换算失败时返回 `None`。
 
+**性能**
+
+- 相对开销：`1/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：只取线的首尾节点。
+
 **示例**
 
 ```python
@@ -2148,6 +2462,12 @@ Hold 只使用头部时间。
 
 索引不存在、Note 结构非法或时间越界时返回 `None`。
 
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(log n)`；空间复杂度：`O(1)`
+- 大参数提示：定位 Note 所在线段。
+
 **示例**
 
 ```python
@@ -2190,6 +2510,12 @@ getNoteCanvas(chart: dict, lineindex: int = -1,
 - Note 不是 Hold 时忽略 `isHoldTail`，仍返回头部画布。
 - 索引不存在、Note 结构非法、Hold 尾部画布无效或画布不存在时返回
   `None`。
+
+**性能**
+
+- 相对开销：`2/10`
+- 时间复杂度：`O(log n)`；空间复杂度：`O(1)`
+- 大参数提示：定位 Note 所在线段。
 
 **示例**
 
