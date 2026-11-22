@@ -6,3 +6,6 @@ venv/
 build/
 dist/
 *.egg-info/
+
+# Local generated examples; intentionally excluded from the repository.
+examples/

@@ -29,11 +29,11 @@
 
 ## 安装与导入
 
-以下路径均相对于项目根目录（包含 `src/`、`docs/`、`tools/` 和 `pyproject.toml`
-的目录，即上一级）。包位于 `src/rizChartFunction`。
+以下路径均相对于当前版本目录 `0.1.0/`（包含 `src/`、`docs/`、`tools/` 和
+`pyproject.toml` 的目录）。包位于 `src/rizChartFunction`。
 
 ```powershell
-# 在项目根目录执行
+# 在 0.1.0/ 版本目录执行
 $env:PYTHONPATH = "src"
 python
 ```
