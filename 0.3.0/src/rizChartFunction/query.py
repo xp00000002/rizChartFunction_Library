@@ -3097,12 +3097,14 @@ def getYBorder(
     gamespeed: float,
     type: str = "solidTop",
     isReturnRealTime: bool = False,
+    camerascale: float = 1.0,
 ) -> float | None:
     """计算恒定 BPM/画布流速下的可视 Y 边界。
 
     ``type`` 可取值见 :data:`_Y_BORDER_COEFFICIENTS`；结果默认为 tick
     （节拍）数，``isReturnRealTime=True`` 时按 BPM 转为实际秒数。
-    ``canvasspeed=0`` 时返回 ``NaN``；其它非法输入返回 ``None``。
+    ``camerascale`` 会乘到实际 W 上。``canvasspeed=0`` 时返回 ``NaN``；
+    其它非法输入返回 ``None``。
     """
     coefficient = _y_border_coefficient(type)
     if coefficient is None or not isinstance(isReturnRealTime, bool):
@@ -3113,13 +3115,15 @@ def getYBorder(
         return None
     if not _is_finite_number(gamespeed) or float(gamespeed) <= 0.0:
         return None
+    if not _is_finite_number(camerascale) or float(camerascale) <= 0.0:
+        return None
 
     k = 6.0 + 7.0 * (float(gamespeed) - 1.0) / 9.0
     denominator = 60.0 * float(canvasspeed) * k
     if denominator == 0.0:
         return math.nan
 
-    w = float(bpm) / denominator
+    w = float(bpm) / denominator * float(camerascale)
     result = coefficient * w
     if isReturnRealTime:
         result = result * 60.0 / float(bpm)
@@ -3134,14 +3138,7 @@ def _y_border_events(chart: dict, index: int) -> list[float] | None:
     if not isinstance(speed_points, list):
         return None
     events = {0.0}
-    for item in bpm_shifts:
-        if not isinstance(item, dict):
-            return None
-        time = item.get("time")
-        if not _is_finite_number(time) or float(time) < 0.0:
-            return None
-        events.add(float(time))
-    for item in speed_points:
+    for item in bpm_shifts + speed_points:
         if not isinstance(item, dict):
             return None
         time = item.get("time")
@@ -3179,7 +3176,8 @@ def getYBorderByChart(
 
     从查询 tick 向边界方向前进，按 BPM/画布流速关键点切段，每段使用
     ``段 W = 段 tick 长度 / 当前段 W`` 累加，直到达到边界系数对应的
-    W 数。``isReturnRealTime=True`` 时再按每段实际 BPM 积分换算为秒。
+    W 数；查询时间的摄像机缩放会乘到实际 W 上。
+    ``isReturnRealTime=True`` 时再按每段实际 BPM 积分换算为秒。
     失败返回 ``None``；零画布流速导致除零时返回 ``NaN``。
     """
     if not isinstance(chart, dict):
@@ -3198,6 +3196,9 @@ def getYBorderByChart(
 
     start_tick = _query_tick(chart, float(time), isRealTime)
     if start_tick is None:
+        return None
+    camera_scale = getCameraScaleAt(chart, time, isRealTime)
+    if camera_scale is None or float(camera_scale) <= 0.0:
         return None
     events = _y_border_events(chart, index)
     if events is None:
@@ -3231,7 +3232,7 @@ def getYBorderByChart(
         bpm, speed = sample_values
         if speed < 0.0:
             return None
-        w = bpm / (60.0 * speed * k)
+        w = bpm / (60.0 * speed * k) * float(camera_scale)
         if w == 0.0 or not math.isfinite(w):
             return math.nan
         if w < 0.0:

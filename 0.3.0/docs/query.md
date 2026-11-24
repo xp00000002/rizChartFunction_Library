@@ -3218,6 +3218,7 @@ Y 边界系数：
 getYBorder(bpm: float, canvasspeed: float, gamespeed: float,
            type: str = "solidTop",
            isReturnRealTime: bool = False,
+           camerascale: float = 1.0,
            *, isReturnException: bool = False) -> float | None
 ```
 
@@ -3230,6 +3231,7 @@ getYBorder(bpm: float, canvasspeed: float, gamespeed: float,
 | `gamespeed` | `float` | 是 | - | 玩家设置的全局流速，必须大于 `0` |
 | `type` | `str` | 否 | `"solidTop"` | 边界类型，见上表 |
 | `isReturnRealTime` | `bool` | 否 | `False` | `True` 时返回实际秒数，否则返回 tick 数 |
+| `camerascale` | `float` | 否 | `1.0` | 摄像机缩放比例，必须大于 `0`；实际 W 会乘以该值 |
 | `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值 |
 
 **用途**
@@ -3240,8 +3242,9 @@ getYBorder(bpm: float, canvasspeed: float, gamespeed: float,
 
 ```text
 K = 6 + 7 * (gamespeed - 1) / 9
-W = bpm / (60 * canvasspeed * K)
-边界 = 系数 * W
+目标W = bpm / (60 * canvasspeed * K)
+实际W = 目标W * camerascale
+边界 = 系数 * 实际W
 ```
 
 `isReturnRealTime=True` 时，再把 tick 数按当前 BPM 换算为秒：
@@ -3252,7 +3255,7 @@ W = bpm / (60 * canvasspeed * K)
 
 **返回值**
 
-成功返回 `float` tick 数或秒数；`canvasspeed=0` 返回 `NaN`；`bpm <= 0`、`gamespeed <= 0`、`type` 非法或参数非有限数时返回 `None`。
+成功返回 `float` tick 数或秒数；`canvasspeed=0` 返回 `NaN`；`bpm <= 0`、`gamespeed <= 0`、`camerascale <= 0`、`type` 非法或参数非有限数时返回 `None`。
 
 **异常**
 
@@ -3272,6 +3275,7 @@ from rizChartFunction import getYBorder
 print(getYBorder(180.0, 1.0, 1.0, "solidTop"))          # 3.25
 print(getYBorder(180.0, 1.0, 1.0, "solidBottom"))       # -0.75
 print(getYBorder(180.0, 1.0, 1.0, "solidTop", True))    # 1.0833333333333333 秒
+print(getYBorder(180.0, 1.0, 1.0, "solidTop", False, 2.0))  # 6.5
 ```
 
 ### `getYBorderByChart()`
@@ -3302,7 +3306,7 @@ getYBorderByChart(chart: dict, time: float, index: int,
 
 **用途**
 
-查询谱面中 BPM 和画布流速随时间的实际变化，计算可视 Y 边界。
+查询谱面中 BPM、画布流速随时间的实际变化，并使用查询时刻的摄像机缩放，计算可视 Y 边界。
 
 **分段积分算法**
 
@@ -3310,17 +3314,19 @@ getYBorderByChart(chart: dict, time: float, index: int,
 
 1. 将所有 BPM 节点时间和画布流速关键点时间合并为分段边界。
 2. 每一段内 BPM、画布流速视为常数。
-3. 该段 W：
+3. 查询时刻的摄像机缩放由 `getCameraScaleAt()` 获取，并作为固定比例使用。
+4. 该段实际 W：
    ```text
-   W = bpm / (60 * canvasspeed * K)
+   目标W = bpm / (60 * canvasspeed * K)
+   实际W = 目标W * camerascale
    ```
-4. 该段包含的 W 数：
+5. 该段包含的 W 数：
    ```text
-   段W数 = 段tick长度 / W
+   段W数 = 段tick长度 / 实际W
    ```
-5. 从内向外累加各段的 W 数，直到达到目标边界系数
+6. 从内向外累加各段的 W 数，直到达到目标边界系数
    （6.5、5.5、0.5、1.5 等）。
-6. 最后一段按比例截断，返回累计 tick 距离。
+7. 最后一段按比例截断，返回累计 tick 距离。
 
 `isReturnRealTime=True` 时，对经过的各段再按该段实际 BPM 累加：
 
@@ -3330,7 +3336,7 @@ getYBorderByChart(chart: dict, time: float, index: int,
 
 **返回值**
 
-成功返回 `float` tick 数或秒数；`canvas speed=0` 导致除零时返回 `NaN`；参数、谱面结构、BPM 时间轴、画布或索引非法时返回 `None`。
+成功返回 `float` tick 数或秒数；`canvas speed=0` 导致除零时返回 `NaN`；参数、谱面结构、BPM 时间轴、摄像机缩放、画布或索引非法时返回 `None`。
 
 **异常**
 
@@ -3340,7 +3346,7 @@ getYBorderByChart(chart: dict, time: float, index: int,
 
 - 相对开销：`3/10`
 - 时间复杂度：`O(E log E)`；空间复杂度：`O(E)`
-- 大参数提示：E 为 BPM 节点数与画布流速关键点数之和；分段越多越慢。
+- 大参数提示：E 为 BPM 节点数与画布流速关键点数之和；分段越多越慢。摄像机缩放只在查询时刻获取一次。
 
 **示例**
 
