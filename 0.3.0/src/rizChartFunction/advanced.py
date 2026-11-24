@@ -1,4 +1,4 @@
-"""高级批量插入、复制、缓动与绘图工具。
+"""高级批量插入、复制、缓动、颜色替换与绘图工具。
 
 本模块及 ``advanced_copy`` / ``advanced_ease`` / ``advanced_draw`` 只调用
 base / chart / query 暴露的公开函数，不直接修改谱面 dict。
@@ -7,6 +7,8 @@ base / chart / query 暴露的公开函数，不直接修改谱面 dict。
 """
 
 from __future__ import annotations
+
+from ._exception_wrapper import install_exception_api
 
 import math
 
@@ -41,12 +43,21 @@ from .chart import (
     deleteRiztime,
     setCanvasPosition,
     setCanvasSpeed,
+    setLineColor,
+    setLinePoint,
+    setNormalTheme,
+    setRingPoint,
+    setRiztime,
 )
 from .query import (
     getCanvasCount,
     getCanvasPositionAt,
+    getLine,
+    getLineCount,
     getRiztime,
     getRiztimeCount,
+    getTheme,
+    getTickAt,
 )
 from .advanced_copy import (
     copyBpmShift,
@@ -105,6 +116,7 @@ __all__ = [
     "copyCamera",
     "copyCameraPosition",
     "copyCameraScale",
+    "transColor",
     "setBpmShiftEase",
     "setLinePointPositionEase",
     "setLinePointColorEase",
@@ -1250,3 +1262,508 @@ def addCameraScaleByDict(
             continue
         actions.append(lambda i=inserted: deleteCameraScale(chart, i))
     return sorted(failures)
+
+
+_TRANS_LINE_TYPES = ("linePoint", "lineColor", "ringColor")
+_TRANS_THEME_TYPES = ("normalTheme", "riztimeTheme")
+_TRANS_TYPES = (_TRANS_LINE_TYPES + _TRANS_THEME_TYPES)
+
+
+def _parse_trans_color(value: object) -> tuple[int, int, int, int] | None:
+    """用现有公开构造函数解析一个颜色，返回规范化 RGBA。"""
+    spec = createLinePoint(0.0, 0.0, 0, 0, value)
+    if not isinstance(spec, dict):
+        return None
+    color = spec.get("color")
+    if not isinstance(color, list) or len(color) != 4:
+        return None
+    return tuple(color)
+
+
+def _parse_trans_color_list(value: object) -> list[tuple[int, int, int, int]] | None:
+    """解析单个颜色或颜色列表。"""
+    if isinstance(value, str):
+        parsed = _parse_trans_color(value)
+        return [parsed] if parsed is not None else None
+    if not isinstance(value, list) or not value:
+        return None
+
+    single = _parse_trans_color(value)
+    if single is not None:
+        return [single]
+
+    result = []
+    for item in value:
+        parsed = _parse_trans_color(item)
+        if parsed is None:
+            return None
+        result.append(parsed)
+    return result
+
+
+def _parse_trans_types(value: object) -> list[str] | None:
+    if isinstance(value, str):
+        values = [value]
+    elif isinstance(value, list) and value and all(
+        isinstance(item, str) for item in value
+    ):
+        values = list(value)
+    else:
+        return None
+
+    result = []
+    for item in values:
+        if item not in _TRANS_TYPES:
+            return None
+        if item not in result:
+            result.append(item)
+    return result
+
+
+def _trans_time_range(
+    chart: dict,
+    starttime: object,
+    endtime: object,
+    isRealStartTime: object,
+    isRealEndTime: object,
+) -> tuple[float, float | None] | None:
+    if not isinstance(isRealStartTime, bool) or not isinstance(isRealEndTime, bool):
+        return None
+    if not _is_finite_number(starttime) or float(starttime) < 0.0:
+        return None
+    if endtime is not None and (
+        not _is_finite_number(endtime) or float(endtime) < 0.0
+    ):
+        return None
+
+    if isRealStartTime:
+        start = getTickAt(chart, float(starttime))
+    else:
+        start = float(starttime)
+    if start is None:
+        return None
+
+    if endtime is None:
+        return (start, None)
+
+    if isRealEndTime:
+        end = getTickAt(chart, float(endtime))
+    else:
+        end = float(endtime)
+    if end is None or end < start:
+        return None
+    return (start, end)
+
+
+def _trans_time_match(time: float, start: float, end: float | None) -> bool:
+    return time >= start and (end is None or time <= end)
+
+
+def _trans_color_pair(
+    start_color: object,
+    end_color: object,
+    color_map: dict,
+) -> tuple[tuple, tuple, bool]:
+    start = tuple(start_color)
+    end = tuple(end_color)
+    new_start = color_map.get(start, start)
+    new_end = color_map.get(end, end)
+    return new_start, new_end, (new_start != start or new_end != end)
+
+
+def _trans_line_color_changes(
+    chart: dict,
+    selected_types: list[str],
+    color_map: dict,
+    start: float,
+    end: float | None,
+) -> tuple[list[tuple], dict[str, set]] | None:
+    line_count = getLineCount(chart)
+    if not _is_int(line_count):
+        return None
+
+    plans = []
+    indexes = {kind: set() for kind in _TRANS_LINE_TYPES if kind in selected_types}
+
+    for line_index in range(line_count):
+        line = getLine(chart, line_index)
+        if not isinstance(line, dict):
+            return None
+
+        if "linePoint" in indexes:
+            points = line.get("linePoints")
+            if not isinstance(points, list):
+                return None
+            for point_index, point in enumerate(points):
+                if not isinstance(point, dict):
+                    return None
+                point_time = point.get("time")
+                if not _is_finite_number(point_time):
+                    return None
+                if not _trans_time_match(float(point_time), start, end):
+                    continue
+                old_color = tuple(point.get("color", []))
+                if len(old_color) != 4:
+                    return None
+                new_color = color_map.get(old_color)
+                if new_color is None or new_color == old_color:
+                    continue
+                plans.append(
+                    ("linePoint", line_index, point_index, old_color, new_color)
+                )
+                indexes["linePoint"].add((line_index, point_index))
+
+        if "lineColor" in indexes:
+            color_nodes = line.get("lineColor")
+            if not isinstance(color_nodes, list):
+                return None
+            for color_index, node in enumerate(color_nodes):
+                if not isinstance(node, dict):
+                    return None
+                node_time = node.get("time")
+                if not _is_finite_number(node_time):
+                    return None
+                if not _trans_time_match(float(node_time), start, end):
+                    continue
+                old_start = node.get("startColor")
+                old_end = node.get("endColor")
+                if not isinstance(old_start, list) or not isinstance(old_end, list):
+                    return None
+                new_start, new_end, changed = _trans_color_pair(
+                    old_start,
+                    old_end,
+                    color_map,
+                )
+                if not changed:
+                    continue
+                plans.append(
+                    (
+                        "lineColor",
+                        line_index,
+                        color_index,
+                        tuple(old_start),
+                        tuple(old_end),
+                        new_start,
+                        new_end,
+                    )
+                )
+                indexes["lineColor"].add((line_index, color_index))
+
+        if "ringColor" in indexes:
+            ring_nodes = line.get("judgeRingColor")
+            if not isinstance(ring_nodes, list):
+                return None
+            for ring_index, node in enumerate(ring_nodes):
+                if not isinstance(node, dict):
+                    return None
+                node_time = node.get("time")
+                if not _is_finite_number(node_time):
+                    return None
+                if not _trans_time_match(float(node_time), start, end):
+                    continue
+                old_start = node.get("startColor")
+                old_end = node.get("endColor")
+                if not isinstance(old_start, list) or not isinstance(old_end, list):
+                    return None
+                new_start, new_end, changed = _trans_color_pair(
+                    old_start,
+                    old_end,
+                    color_map,
+                )
+                if not changed:
+                    continue
+                plans.append(
+                    (
+                        "ringColor",
+                        line_index,
+                        ring_index,
+                        tuple(old_start),
+                        tuple(old_end),
+                        new_start,
+                        new_end,
+                    )
+                )
+                indexes["ringColor"].add((line_index, ring_index))
+
+    return plans, indexes
+
+
+def _map_theme_colors(
+    colors: object,
+    color_map: dict,
+) -> tuple[list[tuple], list[int]] | None:
+    if not isinstance(colors, list) or len(colors) != 3:
+        return None
+    result = []
+    changed = []
+    for color_index, color in enumerate(colors):
+        if not isinstance(color, list) or len(color) != 4:
+            return None
+        old_color = tuple(color)
+        new_color = color_map.get(old_color, old_color)
+        result.append(new_color)
+        if new_color != old_color:
+            changed.append(color_index)
+    return result, changed
+
+
+def _trans_theme_color_changes(
+    chart: dict,
+    selected_types: list[str],
+    color_map: dict,
+    start: float,
+    end: float | None,
+) -> tuple[list[tuple], set[tuple[int, int]]] | None:
+    plans = []
+    indexes: set[tuple[int, int]] = set()
+
+    if "normalTheme" in selected_types:
+        themes = getTheme(chart, 0, -1)
+        if not isinstance(themes, list) or not themes:
+            return None
+        colors = themes[0].get("colorsList") if isinstance(themes[0], dict) else None
+        mapped = _map_theme_colors(colors, color_map)
+        if mapped is None:
+            return None
+        new_colors, changed = mapped
+        if changed:
+            plans.append(("normalTheme", tuple(tuple(c) for c in colors), new_colors))
+            indexes.update((0, color_index) for color_index in changed)
+
+    if "riztimeTheme" in selected_types:
+        riztimes = getRiztime(chart, 0, -1)
+        if not isinstance(riztimes, list):
+            return None
+        for riztime in riztimes:
+            if not isinstance(riztime, dict):
+                return None
+            theme_index = riztime.get("themeIndex")
+            theme_start = riztime.get("start")
+            theme_end = riztime.get("end")
+            if (
+                not _is_int(theme_index)
+                or not _is_finite_number(theme_start)
+                or not _is_finite_number(theme_end)
+            ):
+                return None
+            if float(theme_start) < start:
+                continue
+            if end is not None and float(theme_end) > end:
+                continue
+            colors = riztime.get("colorsList")
+            mapped = _map_theme_colors(colors, color_map)
+            if mapped is None:
+                return None
+            new_colors, changed = mapped
+            if not changed:
+                continue
+            old_colors = tuple(tuple(c) for c in colors)
+            plans.append(("riztimeTheme", theme_index, old_colors, new_colors))
+            indexes.update(
+                (theme_index, color_index) for color_index in changed
+            )
+
+    return plans, indexes
+
+
+def _apply_trans_plans(chart: dict, plans: list[tuple]) -> bool:
+    actions = []
+    try:
+        for plan in plans:
+            kind = plan[0]
+            if kind == "linePoint":
+                _, line_index, point_index, old_color, new_color = plan
+                if setLinePoint(
+                    chart,
+                    line_index,
+                    point_index,
+                    color=list(new_color),
+                ) is None:
+                    raise RuntimeError("line point color set failed")
+                actions.append(
+                    lambda line_index=line_index, point_index=point_index,
+                    old_color=old_color: setLinePoint(
+                        chart,
+                        line_index,
+                        point_index,
+                        color=list(old_color),
+                    )
+                )
+            elif kind in ("lineColor", "ringColor"):
+                (
+                    _,
+                    line_index,
+                    node_index,
+                    old_start,
+                    old_end,
+                    new_start,
+                    new_end,
+                ) = plan
+                setter = setLineColor if kind == "lineColor" else setRingPoint
+                if setter(
+                    chart,
+                    line_index,
+                    node_index,
+                    startcolor=list(new_start),
+                    endcolor=list(new_end),
+                ) is None:
+                    raise RuntimeError(f"{kind} set failed")
+                actions.append(
+                    lambda setter=setter, line_index=line_index,
+                    node_index=node_index, old_start=old_start,
+                    old_end=old_end: setter(
+                        chart,
+                        line_index,
+                        node_index,
+                        startcolor=list(old_start),
+                        endcolor=list(old_end),
+                    )
+                )
+            elif kind == "normalTheme":
+                _, old_colors, new_colors = plan
+                if setNormalTheme(
+                    chart,
+                    *[list(color) for color in new_colors],
+                ) is None:
+                    raise RuntimeError("normal theme set failed")
+                actions.append(
+                    lambda old_colors=old_colors: setNormalTheme(
+                        chart,
+                        *[list(color) for color in old_colors],
+                    )
+                )
+            elif kind == "riztimeTheme":
+                _, theme_index, old_colors, new_colors = plan
+                if setRiztime(
+                    chart,
+                    theme_index,
+                    *[list(color) for color in new_colors],
+                ) is None:
+                    raise RuntimeError("riztime theme set failed")
+                actions.append(
+                    lambda theme_index=theme_index,
+                    old_colors=old_colors: setRiztime(
+                        chart,
+                        theme_index,
+                        *[list(color) for color in old_colors],
+                    )
+                )
+            else:
+                raise RuntimeError("unknown transColor plan")
+    except Exception:
+        for action in reversed(actions):
+            try:
+                action()
+            except Exception:
+                pass
+        return False
+    return True
+
+
+def transColor(
+    chart: dict,
+    origioncolorlist: list | str,
+    targetcolorlist: list | str,
+    type: list | str = "linePoint",
+    starttime: float = 0.0,
+    endtime: float | None = None,
+    isRealStartTime: bool = False,
+    isRealEndTime: bool = False,
+) -> list[dict] | None:
+    """按颜色映射替换谱面中的颜色节点。
+
+    ``origioncolorlist`` / ``targetcolorlist`` 是单个颜色或颜色列表；
+    两种列表长度必须相等。颜色替换按列表索引一一对应，使用规范化后的
+    RGBA 精确匹配。``type`` 指定替换范围，返回的主题索引统一使用
+    ``"theme"`` 类型。
+
+    线节点按节点时间过滤；Riztime 主题只有整个时间区间都位于
+    ``[starttime, endtime]`` 内才会替换；普通主题不受时间范围影响。
+    任一结构、参数或写入失败都会回退全部修改并返回 ``None``。
+    """
+    if not isinstance(chart, dict):
+        return None
+
+    origins = _parse_trans_color_list(origioncolorlist)
+    targets = _parse_trans_color_list(targetcolorlist)
+    if origins is None or targets is None or len(origins) != len(targets):
+        return None
+    if len(set(origins)) != len(origins):
+        return None
+
+    selected_types = _parse_trans_types(type)
+    if selected_types is None:
+        return None
+
+    time_range = _trans_time_range(
+        chart,
+        starttime,
+        endtime,
+        isRealStartTime,
+        isRealEndTime,
+    )
+    if time_range is None:
+        return None
+    start, end = time_range
+
+    color_map = dict(zip(origins, targets))
+    plans = []
+    indexes = {}
+
+    line_types = [kind for kind in selected_types if kind in _TRANS_LINE_TYPES]
+    if line_types:
+        collected = _trans_line_color_changes(
+            chart,
+            line_types,
+            color_map,
+            start,
+            end,
+        )
+        if collected is None:
+            return None
+        line_plans, line_indexes = collected
+        plans.extend(line_plans)
+        indexes.update(line_indexes)
+
+    theme_types = [kind for kind in selected_types if kind in _TRANS_THEME_TYPES]
+    if theme_types:
+        collected = _trans_theme_color_changes(
+            chart,
+            theme_types,
+            color_map,
+            start,
+            end,
+        )
+        if collected is None:
+            return None
+        theme_plans, theme_indexes = collected
+        plans.extend(theme_plans)
+        indexes["theme"] = theme_indexes
+
+    if not plans:
+        return []
+
+    order = []
+    for selected in selected_types:
+        group = "theme" if selected in _TRANS_THEME_TYPES else selected
+        if group not in order:
+            order.append(group)
+
+    result = []
+    for group in order:
+        group_indexes = indexes.get(group)
+        if not group_indexes:
+            continue
+        result.append(
+            {
+                "type": group,
+                "indexlist": [list(index) for index in sorted(group_indexes)],
+            }
+        )
+
+    if not _apply_trans_plans(chart, plans):
+        return None
+    return result
+
+
+install_exception_api(globals())

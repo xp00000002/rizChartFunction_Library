@@ -8,31 +8,46 @@
 
 | 目录 | 状态 | 公开 API | 说明 |
 | --- | --- | --- | --- |
-| [`0.2.0/`](0.2.0/) | 当前版本 | 149 个函数 | 新增 `getXYRatio()`、`getXYRatioByChart()`、`getRingColor()` |
-| [`0.1.0/`](0.1.0/) | 历史版本 | 146 个函数 | 上一版 GitHub 快照 |
-
-`0.2.0` 新增的查询函数在 `0.2.0` 之前的版本中不可用：
-
-- `getXYRatio(bpm, canvasspeed, gamespeed, value=1.0, type="X")`
-- `getXYRatioByChart(chart, index, time, gamespeed, value=1.0, type="X", isRealTime=False)`
-- `getRingColor(chart, index, time, isRealTime=False)`
+| [`0.3.0/`](0.3.0/) | 当前版本 | 157 个函数 | 新增 X/Y 边界、遮罩透明度、游戏缩放、线宽、颜色替换和统一异常模式 |
+| [`0.2.0/`](0.2.0/) | 上一版本 | 149 个函数 | 新增 `getXYRatio()`、`getXYRatioByChart()`、`getRingColor()` |
+| [`0.1.0/`](0.1.0/) | 历史版本 | 146 个函数 | 更早的 GitHub 快照 |
 
 各版本的完整说明：
 
+- [0.3.0 文档](0.3.0/docs/README.md)
 - [0.2.0 文档](0.2.0/docs/README.md)
 - [0.1.0 文档](0.1.0/docs/README.md)
+
+## 0.3.0 主要变化
+
+- 新增查询函数：
+  - `getXBorder()` / `getXBorderByChart()`
+  - `getYBorder()` / `getYBorderByChart()`
+  - `getShadeOpacity()`
+  - `getGameScale()`
+  - `getLineWidth()`
+- 新增 `transColor()` 批量颜色替换。
+- 所有可失败函数新增 keyword-only `isReturnException` 参数。
+- 新增 `rizChartFunction.exceptions` 自定义异常模块。
+- 新增 `docs/EXCEPTIONS.md` 异常说明。
 
 ## 目录结构
 
 ```text
 rizChartFunction_Library/
 ├── 0.1.0/                      # 历史版本快照
-│   ├── src/rizChartFunction/   # 核心库源码
-│   ├── docs/                   # 该版本的完整文档
-│   ├── tools/                  # 参数示意图工具
+│   ├── src/rizChartFunction/
+│   ├── docs/
+│   ├── tools/
 │   ├── pyproject.toml
 │   └── README.md
-├── 0.2.0/                      # 当前版本快照
+├── 0.2.0/                      # 上一版本快照
+│   ├── src/rizChartFunction/
+│   ├── docs/
+│   ├── tools/
+│   ├── pyproject.toml
+│   └── README.md
+├── 0.3.0/                      # 当前版本快照
 │   ├── src/rizChartFunction/
 │   ├── docs/
 │   ├── tools/
@@ -51,7 +66,7 @@ rizChartFunction_Library/
 
 ```bash
 git clone https://github.com/xp00000002/rizChartFunction_Library.git
-cd rizChartFunction_Library/0.2.0
+cd rizChartFunction_Library/0.3.0
 python -m pip install -e .
 ```
 
@@ -70,7 +85,7 @@ python -m pip install fontTools shapely numpy Pillow scikit-image
 ### 安装历史版本
 
 ```bash
-cd rizChartFunction_Library/0.1.0
+cd rizChartFunction_Library/0.2.0
 python -m pip install -e .
 ```
 
@@ -80,7 +95,7 @@ python -m pip install -e .
 
 ```python
 import sys
-sys.path.insert(0, "0.2.0/src")
+sys.path.insert(0, "0.3.0/src")
 
 import rizChartFunction as rcf
 ```
@@ -102,18 +117,30 @@ import rizChartFunction as rcf
 chart = rcf.new(180.0)
 ```
 
-## 版本与兼容性
+## 自定义异常
 
-- `0.2.0`：新增 `getXYRatio()`、`getXYRatioByChart()`、`getRingColor()`，并修正
-  X/Y 视觉比例公式；公开 API 共 149 个函数。
-- `0.1.0`：保留上一版行为和函数集合；公开 API 共 146 个函数。
-- 需要新查询功能时请使用 `0.2.0/`；需要复现旧版行为时请使用 `0.1.0/`。
+可失败函数默认返回原有失败值；传入 `isReturnException=True` 时改为抛出异常：
 
-`0.2.0` 的 `getXYRatio()` 版本提示：
+```python
+from rizChartFunction import getRingColor
 
-> 本函数自 `0.2.0` 起提供；在 `0.2.0` 之前的版本中不可用。
+try:
+    color = getRingColor(chart, 0, 1.0, isReturnException=True)
+except Exception as error:
+    print(error)
+```
 
-`getXYRatioByChart()` 和 `getRingColor()` 同样自 `0.2.0` 起提供。
+异常类位于 `rizChartFunction.exceptions`，完整说明见
+[0.3.0 异常文档](0.3.0/docs/EXCEPTIONS.md)。
+
+## 版本兼容性
+
+- `0.3.0`：新增边界、遮罩透明度、游戏缩放、线宽、颜色替换和异常模式；
+  公开 API 共 157 个函数。
+- `0.2.0`：新增 X/Y 视觉比例与判定环颜色查询；公开 API 共 149 个函数。
+- `0.1.0`：保留更早行为和函数集合；公开 API 共 146 个函数。
+- 需要最新查询功能时使用 `0.3.0/`；需要复现旧版行为时使用 `0.2.0/` 或
+  `0.1.0/`。
 
 ## 示例文件
 
@@ -125,8 +152,10 @@ GitHub；如需保留，请放在本地任意位置，或在本地仓库中使�
 
 每个版本目录内都有独立文档和工具：
 
+- [0.3.0 文档总览](0.3.0/docs/README.md)
+- [0.3.0 自定义异常说明](0.3.0/docs/EXCEPTIONS.md)
+- [0.3.0 性能标注说明](0.3.0/docs/PERFORMANCE.md)
+- [0.3.0 内部实现说明](0.3.0/docs/TECHNICAL.md)
+- [0.3.0 参数示意图工具](0.3.0/tools/chart-parameter-visualizer.html)
 - [0.2.0 文档总览](0.2.0/docs/README.md)
-- [0.2.0 性能标注说明](0.2.0/docs/PERFORMANCE.md)
-- [0.2.0 内部实现说明](0.2.0/docs/TECHNICAL.md)
-- [0.2.0 参数示意图工具](0.2.0/tools/chart-parameter-visualizer.html)
 - [0.1.0 文档总览](0.1.0/docs/README.md)

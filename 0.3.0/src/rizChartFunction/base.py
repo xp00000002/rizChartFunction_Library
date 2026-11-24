@@ -16,6 +16,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import json
 import math
 
@@ -2127,3 +2129,6 @@ def export(chartlist: dict, filename: str) -> bool:
         return False
 
     return True
+
+
+install_exception_api(globals())

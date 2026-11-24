@@ -6,6 +6,8 @@
 `base.py` / `chart.py` / `query.py` 暴露的公开函数，不直接修改谱面 dict。
 
 > 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+>
+> 所有可失败函数额外接受 keyword-only `isReturnException`；设为 `True` 时失败抛出自定义异常，详见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 ## 使用约定
 
@@ -53,6 +55,8 @@
   - [`copyCamera()`](#copycamera)
   - [`copyCameraPosition()`](#copycameraposition)
   - [`copyCameraScale()`](#copycamerascale)
+- [颜色替换函数](#颜色替换函数)
+  - [`transColor()`](#transcolor)
 - [缓动函数](#缓动函数)
   - [缓动函数通用规则](#缓动函数通用规则)
   - [`setBpmShiftEase()`](#setbpmshiftease)
@@ -108,7 +112,8 @@
 ```python
 addLineByDict(chart: dict, dictlist: dict | list,
               index: int | None = -1,
-              isFailAddAllowed: bool = False) -> list[int]
+              isFailAddAllowed: bool = False,
+              *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -119,6 +124,7 @@ addLineByDict(chart: dict, dictlist: dict | list,
 | `dictlist` | `dict \| list` | 是 | - | 一条线规格或线规格列表 |
 | `index` | `int \| None` | 否 | `-1` | 插入位置；`-1` / `None` 表示追加到末尾 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -148,6 +154,10 @@ addLineByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`5/10`
@@ -160,7 +170,8 @@ addLineByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addLinePointByDict(chart: dict, dictlist: dict | list,
-                   isFailAddAllowed: bool = False) -> list[int]
+                   isFailAddAllowed: bool = False,
+                   *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -170,6 +181,7 @@ addLinePointByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 线节点规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -199,6 +211,10 @@ addLinePointByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`4/10`
@@ -211,7 +227,8 @@ addLinePointByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addRingPointByDict(chart: dict, dictlist: dict | list,
-                   isFailAddAllowed: bool = False) -> list[int]
+                   isFailAddAllowed: bool = False,
+                   *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -221,6 +238,7 @@ addRingPointByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 判定环规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -243,6 +261,10 @@ addRingPointByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -255,7 +277,8 @@ addRingPointByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addLineColorByDict(chart: dict, dictlist: dict | list,
-                    isFailAddAllowed: bool = False) -> list[int]
+                    isFailAddAllowed: bool = False,
+                    *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -265,6 +288,7 @@ addLineColorByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 线色覆盖规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -287,6 +311,10 @@ addLineColorByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -299,7 +327,8 @@ addLineColorByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addNoteByDict(chart: dict, dictlist: dict | list,
-              isFailAddAllowed: bool = False) -> list[int]
+              isFailAddAllowed: bool = False,
+              *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -309,6 +338,7 @@ addNoteByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | Note 规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -329,6 +359,10 @@ addNoteByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`4/10`
@@ -348,7 +382,8 @@ addIsolatedNote(chart: dict, canvasindex: int, time: float, position: float,
                 isRealTime: bool = False,
                 isRealEndTime: bool = False,
                 isAbsolutePosition: bool = False,
-                isAbsoluteEndPosition: bool = False) -> int | None
+                isAbsoluteEndPosition: bool = False,
+                *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -367,6 +402,7 @@ addIsolatedNote(chart: dict, canvasindex: int, time: float, position: float,
 | `isRealEndTime` | `bool` | 否 | `False` | `endtime` 是否使用真实时间（秒） |
 | `isAbsolutePosition` | `bool` | 否 | `False` | `position` 是否使用绝对坐标 |
 | `isAbsoluteEndPosition` | `bool` | 否 | `False` | `endposition` 是否使用绝对坐标 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -410,6 +446,10 @@ Tap / Drag / Hold。线节点和判定环均为透明色，因此辅助线本身
 - 失败时不会留下新线或部分 Note。
 - `type` 大小写不敏感；`endtime` 为 `None` 时 Hold 会失败。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartStructureError` 或其更具体的子类。可能异常：`RizChartStructureError`, `RizChartCanvasError`, `RizChartTimeError`, `RizChartFloorPositionError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -422,7 +462,8 @@ Tap / Drag / Hold。线节点和判定环均为透明色，因此辅助线本身
 
 ```python
 addRiztimeByDict(chart: dict, dictlist: dict | list,
-                 isFailAddAllowed: bool = False) -> list[int]
+                 isFailAddAllowed: bool = False,
+                 *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -432,6 +473,7 @@ addRiztimeByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | Riztime 规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -458,6 +500,10 @@ addRiztimeByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`4/10`
@@ -470,7 +516,8 @@ addRiztimeByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addBpmByDict(chart: dict, dictlist: dict | list,
-             isFailAddAllowed: bool = False) -> list[int]
+             isFailAddAllowed: bool = False,
+             *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -480,6 +527,7 @@ addBpmByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | BPM 节点规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -509,6 +557,10 @@ addBpmByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -545,7 +597,8 @@ addBpmByDict(
 
 ```python
 addCanvasByDict(chart: dict, dictlist: dict | list,
-                isFailAddAllowed: bool = False) -> list[int]
+                isFailAddAllowed: bool = False,
+                *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -555,6 +608,7 @@ addCanvasByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 画布规格或规格列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -583,6 +637,10 @@ addCanvasByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -595,7 +653,8 @@ addCanvasByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addCanvasPositionByDict(chart: dict, dictlist: dict | list,
-                        isFailAddAllowed: bool = False) -> list[int]
+                        isFailAddAllowed: bool = False,
+                        *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -605,6 +664,7 @@ addCanvasPositionByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 画布横向移动节点规格或列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -627,6 +687,10 @@ addCanvasPositionByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -639,7 +703,8 @@ addCanvasPositionByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addCanvasSpeedByDict(chart: dict, dictlist: dict | list,
-                     isFailAddAllowed: bool = False) -> list[int]
+                     isFailAddAllowed: bool = False,
+                     *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -649,6 +714,7 @@ addCanvasSpeedByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 画布速度节点规格或列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -671,6 +737,10 @@ addCanvasSpeedByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -683,7 +753,8 @@ addCanvasSpeedByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addCameraPositionByDict(chart: dict, dictlist: dict | list,
-                        isFailAddAllowed: bool = False) -> list[int]
+                        isFailAddAllowed: bool = False,
+                        *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -693,6 +764,7 @@ addCameraPositionByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 摄像机横向移动节点规格或列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -710,6 +782,10 @@ addCameraPositionByDict(chart: dict, dictlist: dict | list,
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -722,7 +798,8 @@ addCameraPositionByDict(chart: dict, dictlist: dict | list,
 
 ```python
 addCameraScaleByDict(chart: dict, dictlist: dict | list,
-                     isFailAddAllowed: bool = False) -> list[int]
+                     isFailAddAllowed: bool = False,
+                     *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -732,6 +809,7 @@ addCameraScaleByDict(chart: dict, dictlist: dict | list,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `dictlist` | `dict \| list` | 是 | - | 摄像机缩放节点规格或列表 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | `False` 为原子模式，失败整批回退；`True` 跳过失败规格并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -748,6 +826,10 @@ addCameraScaleByDict(chart: dict, dictlist: dict | list,
 **返回值**
 
 返回本批失败规格的原始索引列表；全部成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会先回退本批全部插入；整体输入非法返回 `[-1]`。
+
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -769,7 +851,8 @@ copyLine(sourcechart: dict, indexlist: int | list,
          copymode: str = "insert", offsettime: float = 0.0,
          offsetposition: float = 0.0, canvasmode: str = "insert",
          isRealOffsetTime: bool = False,
-         isFailAddAllowed: bool = False) -> list[int]
+         isFailAddAllowed: bool = False,
+         *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -786,6 +869,7 @@ copyLine(sourcechart: dict, indexlist: int | list,
 | `canvasmode` | `str` | 否 | `"insert"` | `"insert"` / `"increase"` / `"add"` |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -813,6 +897,10 @@ copyLine(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -831,7 +919,8 @@ copyLinePoint(sourcechart: dict, indexlist: int | list,
               offsetposition: float = 0.0,
               canvasmode: str = "insert",
               isRealOffsetTime: bool = False,
-              isFailAddAllowed: bool = False) -> list[int]
+              isFailAddAllowed: bool = False,
+              *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -848,6 +937,7 @@ copyLinePoint(sourcechart: dict, indexlist: int | list,
 | `canvasmode` | `str` | 否 | `"insert"` | `"insert"` / `"increase"` / `"add"` |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -874,6 +964,10 @@ copyLinePoint(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -890,7 +984,8 @@ copyRingPoint(sourcechart: dict, indexlist: int | list,
               targetindex: int | None = None,
               copymode: str = "insert", offsettime: float = 0.0,
               isRealOffsetTime: bool = False,
-              isFailAddAllowed: bool = False) -> list[int]
+              isFailAddAllowed: bool = False,
+              *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -905,6 +1000,7 @@ copyRingPoint(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -929,6 +1025,10 @@ copyRingPoint(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -945,7 +1045,8 @@ copyLineColor(sourcechart: dict, indexlist: int | list,
               targetindex: int | None = None,
               copymode: str = "insert", offsettime: float = 0.0,
               isRealOffsetTime: bool = False,
-              isFailAddAllowed: bool = False) -> list[int]
+              isFailAddAllowed: bool = False,
+              *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -960,6 +1061,7 @@ copyLineColor(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -984,6 +1086,10 @@ copyLineColor(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -999,7 +1105,8 @@ copyNote(sourcechart: dict, indexlist: int | list,
          targetchart: dict | None = None, targetindex: int | None = None,
          copymode: str = "insert", offsettime: float = 0.0,
          isRealOffsetTime: bool = False,
-         isFailAddAllowed: bool = False) -> list[int]
+         isFailAddAllowed: bool = False,
+         *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1014,6 +1121,7 @@ copyNote(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1040,6 +1148,10 @@ copyNote(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1055,7 +1167,8 @@ copyBpmShift(sourcechart: dict, indexlist: int | list,
              targetchart: dict | None = None,
              copymode: str = "insert", offsettime: float = 0.0,
              isRealOffsetTime: bool = False,
-             isFailAddAllowed: bool = False) -> list[int]
+             isFailAddAllowed: bool = False,
+             *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1069,6 +1182,7 @@ copyBpmShift(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1095,6 +1209,10 @@ copyBpmShift(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -1110,7 +1228,8 @@ copyRiztime(sourcechart: dict, indexlist: int | list,
             targetchart: dict | None = None,
             copymode: str = "insert", offsettime: float = 0.0,
             isRealOffsetTime: bool = False,
-            isFailAddAllowed: bool = False) -> list[int]
+            isFailAddAllowed: bool = False,
+            *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1124,6 +1243,7 @@ copyRiztime(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1149,6 +1269,10 @@ copyRiztime(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1165,7 +1289,8 @@ copyCanvas(sourcechart: dict, indexlist: int | list,
            copymode: str = "insert", offsettime: float = 0.0,
            offsetposition: float = 0.0,
            isRealOffsetTime: bool = False,
-           isFailAddAllowed: bool = False) -> list[int]
+           isFailAddAllowed: bool = False,
+           *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1181,6 +1306,7 @@ copyCanvas(sourcechart: dict, indexlist: int | list,
 | `offsetposition` | `float` | 否 | `0.0` | 横向位置偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1206,6 +1332,10 @@ copyCanvas(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -1223,7 +1353,8 @@ copyCanvasPosition(sourcechart: dict, indexlist: int | list,
                   copymode: str = "insert", offsettime: float = 0.0,
                   offsetposition: float = 0.0,
                   isRealOffsetTime: bool = False,
-                  isFailAddAllowed: bool = False) -> list[int]
+                  isFailAddAllowed: bool = False,
+                  *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1239,6 +1370,7 @@ copyCanvasPosition(sourcechart: dict, indexlist: int | list,
 | `offsetposition` | `float` | 否 | `0.0` | 横向位置偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1264,6 +1396,10 @@ copyCanvasPosition(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1280,7 +1416,8 @@ copyCanvasSpeed(sourcechart: dict, indexlist: int | list,
                 targetindex: int | None = None,
                 copymode: str = "insert", offsettime: float = 0.0,
                 isRealOffsetTime: bool = False,
-                isFailAddAllowed: bool = False) -> list[int]
+                isFailAddAllowed: bool = False,
+                *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1295,6 +1432,7 @@ copyCanvasSpeed(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1320,6 +1458,10 @@ copyCanvasSpeed(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -1335,7 +1477,8 @@ copyCamera(sourcechart: dict, targetchart: dict | None = None,
            copymode: str = "insert", offsettime: float = 0.0,
            offsetposition: float = 0.0,
            isRealOffsetTime: bool = False,
-           isFailAddAllowed: bool = False) -> list[int]
+           isFailAddAllowed: bool = False,
+           *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1349,6 +1492,7 @@ copyCamera(sourcechart: dict, targetchart: dict | None = None,
 | `offsetposition` | `float` | 否 | `0.0` | 横向位置偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1374,6 +1518,10 @@ copyCamera(sourcechart: dict, targetchart: dict | None = None,
 
 成功返回 `[]`；所有失败返回 `[0]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1390,7 +1538,8 @@ copyCameraPosition(sourcechart: dict, indexlist: int | list,
                    copymode: str = "insert", offsettime: float = 0.0,
                    offsetposition: float = 0.0,
                    isRealOffsetTime: bool = False,
-                   isFailAddAllowed: bool = False) -> list[int]
+                   isFailAddAllowed: bool = False,
+                   *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1405,6 +1554,7 @@ copyCameraPosition(sourcechart: dict, indexlist: int | list,
 | `offsetposition` | `float` | 否 | `0.0` | 横向位置偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1430,6 +1580,10 @@ copyCameraPosition(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1445,7 +1599,8 @@ copyCameraScale(sourcechart: dict, indexlist: int | list,
                 targetchart: dict | None = None,
                 copymode: str = "insert", offsettime: float = 0.0,
                 isRealOffsetTime: bool = False,
-                isFailAddAllowed: bool = False) -> list[int]
+                isFailAddAllowed: bool = False,
+                *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1459,6 +1614,7 @@ copyCameraScale(sourcechart: dict, indexlist: int | list,
 | `offsettime` | `float` | 否 | `0.0` | 时间偏移 |
 | `isRealOffsetTime` | `bool` | 否 | `False` | `offsettime` 是否按目标谱面 BPM 时间轴换算；`True` 时按每个节点原 tick 处的 BPM 换算 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败元素并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1483,11 +1639,126 @@ copyCameraScale(sourcechart: dict, indexlist: int | list,
 
 成功返回 `[]`。`isFailAddAllowed=False` 时任一失败会回退本批全部修改并返回 `[失败索引]`；`True` 时跳过失败元素并返回全部失败索引。整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
 - 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
 - 大参数提示：预演并复制摄像机缩放关键点。
+
+## 颜色替换函数
+
+### `transColor()`
+
+**函数声明**
+
+```python
+transColor(chart: dict, origioncolorlist: list | str,
+           targetcolorlist: list | str,
+           type: list | str = "linePoint",
+           starttime: float = 0.0,
+           endtime: float | None = None,
+           isRealStartTime: bool = False,
+           isRealEndTime: bool = False,
+           *, isReturnException: bool = False) -> list[dict] | None
+```
+
+**参数**
+
+| 参数 | 类型 | 必需 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `chart` | `dict` | 是 | - | 谱面 dict |
+| `origioncolorlist` | `list \| str` | 是 | - | 原颜色或颜色列表；保留此参数名拼写 |
+| `targetcolorlist` | `list \| str` | 是 | - | 目标颜色或颜色列表；数量必须与原颜色列表相同 |
+| `type` | `list \| str` | 否 | `"linePoint"` | 替换类型或类型列表 |
+| `starttime` | `float` | 否 | `0.0` | 搜索起始时间，必须大于等于 `0` |
+| `endtime` | `float \| None` | 否 | `None` | 搜索结束时间；必须大于等于起始时间，`None` 表示无上限 |
+| `isRealStartTime` | `bool` | 否 | `False` | `starttime` 是否使用真实时间 |
+| `isRealEndTime` | `bool` | 否 | `False` | `endtime` 是否使用真实时间 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
+
+**用途**
+
+按颜色映射批量替换指定类型中的颜色：
+
+```text
+origioncolorlist[0] -> targetcolorlist[0]
+origioncolorlist[1] -> targetcolorlist[1]
+...
+```
+
+颜色支持 HEX 字符串或 RGB(A) 列表，统一解析为 RGBA 后做精确匹配。
+两个颜色列表的长度必须相等；原颜色列表中出现重复颜色时视为非法。
+
+**替换类型**
+
+| `type` | 替换对象 |
+| --- | --- |
+| `"linePoint"` | `linePoints[].color` |
+| `"lineColor"` | `lineColor[].startColor` / `endColor` |
+| `"ringColor"` | `judgeRingColor[].startColor` / `endColor` |
+| `"riztimeTheme"` | Riztime 主题的三种颜色 |
+| `"normalTheme"` | 普通主题的三种颜色 |
+
+- `type` 可以是单个字符串或字符串列表。
+- 列表中的 `"normalTheme"` 和 `"riztimeTheme"` 在返回结果中统一合并为
+  `"theme"` 类型。
+- 普通主题索引为 `0`，Riztime 主题索引从 `1` 开始；颜色索引为 `0`、`1`、
+  `2`。
+- 线节点的索引为 `[lineindex, pointindex]`；线色覆盖和判定环的
+  `pointindex` 是各自颜色节点数组中的索引。
+
+**时间过滤**
+
+- 线节点、线色覆盖节点和判定环节点按自身 `time` 判断，包含起止边界。
+- `isRealStartTime=True` / `isRealEndTime=True` 时，先用 BPM 时间轴把
+  秒数换算为 tick。
+- Riztime 主题只有在整个 `[start, end]` 区间都位于
+  `[starttime, endtime]` 内时才会被替换。
+- 普通主题不受 `starttime` / `endtime` 影响，始终参与替换。
+
+**返回值**
+
+成功返回按实际修改内容分组的列表：
+
+```python
+[
+    {"type": "linePoint", "indexlist": [[0, 1], [0, 3]]},
+    {"type": "theme", "indexlist": [[0, 0], [1, 2]]},
+]
+```
+
+- 只有实际发生变化的类型和索引才会出现；没有匹配时返回 `[]`。
+- 同一条颜色节点的 `startColor` 和 `endColor` 都变化时，索引只记录一次。
+- 任一参数、结构或写入失败时回退全部修改并返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartTypeError` 或其更具体的子类。可能异常：`RizChartTypeError`, `RizChartValueError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartStructureError`, `RizChartColorError`, `RizChartThemeError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
+**性能**
+
+- 相对开销：`4/10`
+- 时间复杂度：`O(V + T)`；空间复杂度：`O(V + T)`
+- 大参数提示：V 为需要扫描的线节点/颜色节点数，T 为需要检查的主题数；
+  会先收集全部改动再统一写入。
+
+**示例**
+
+```python
+from rizChartFunction import transColor
+
+changed = transColor(
+    chart,
+    ["#FF0000", "#00FF00"],
+    ["#111111", "#222222"],
+    type=["linePoint", "lineColor", "ringColor", "normalTheme"],
+)
+print(changed)
+```
 
 ## 缓动函数
 
@@ -1523,7 +1794,8 @@ setBpmShiftEase(chart: dict, indexlist: int | list,
                 easetype: int | list,
                 precision: int | float = 1,
                 inserttype: str = "uniform",
-                isFailAddAllowed: bool = False) -> list[int]
+                isFailAddAllowed: bool = False,
+                *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1536,6 +1808,7 @@ setBpmShiftEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值，含义取决于 `inserttype` |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1564,6 +1837,10 @@ setBpmShiftEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`9/10`
@@ -1579,7 +1856,8 @@ setLinePointPositionEase(chart: dict, indexlist: int | list,
                          easetype: int | list,
                          precision: int | float = 1,
                          inserttype: str = "uniform",
-                         isFailAddAllowed: bool = False) -> list[int]
+                         isFailAddAllowed: bool = False,
+                         *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1592,6 +1870,7 @@ setLinePointPositionEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1620,6 +1899,10 @@ setLinePointPositionEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -1635,7 +1918,8 @@ setLinePointColorEase(chart: dict, indexlist: int | list,
                       easetype: int | list,
                       precision: int | float = 1,
                       inserttype: str = "uniform",
-                      isFailAddAllowed: bool = False) -> list[int]
+                      isFailAddAllowed: bool = False,
+                      *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1648,6 +1932,7 @@ setLinePointColorEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1677,6 +1962,10 @@ setLinePointColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -1692,7 +1981,8 @@ setLinePointColorByList(chart: dict, lineindex: int,
                         startpointindex: int, endpointindex: int,
                         startcolor: str | list | None = None,
                         endcolor: str | list | None = None,
-                        easetype: int | list = 0) -> list[int] | None
+                        easetype: int | list = 0,
+                        *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -1706,6 +1996,7 @@ setLinePointColorByList(chart: dict, lineindex: int,
 | `startcolor` | `str \| list \| None` | 否 | `None` | 起始节点颜色；`None` 使用起始节点原色 |
 | `endcolor` | `str \| list \| None` | 否 | `None` | 结束节点颜色；`None` 使用结束节点原色 |
 | `easetype` | `int \| list` | 否 | `0` | 颜色插值缓动 `0..25`，或 Cubic Bezier 列表 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1735,6 +2026,10 @@ setLinePointColorByList(chart: dict, lineindex: int,
 - 本函数不应出现部分成功；实现会先校验并计算全部目标颜色，再统一写入。
   若写入过程中发生异常，会尝试恢复已修改节点的原色。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartIndexError` 或其更具体的子类。可能异常：`RizChartIndexError`, `RizChartStructureError`, `RizChartColorError`, `RizChartEaseError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`3/10`
@@ -1750,7 +2045,8 @@ setRingColorEase(chart: dict, indexlist: int | list,
                  easetype: int | list,
                  precision: int | float = 1,
                  inserttype: str = "uniform",
-                 isFailAddAllowed: bool = False) -> list[int]
+                 isFailAddAllowed: bool = False,
+                 *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1763,6 +2059,7 @@ setRingColorEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1790,6 +2087,10 @@ setRingColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -1805,7 +2106,8 @@ setLineColorEase(chart: dict, indexlist: int | list,
                  easetype: int | list,
                  precision: int | float = 1,
                  inserttype: str = "uniform",
-                 isFailAddAllowed: bool = False) -> list[int]
+                 isFailAddAllowed: bool = False,
+                 *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1818,6 +2120,7 @@ setLineColorEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1845,6 +2148,10 @@ setLineColorEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -1860,7 +2167,8 @@ setCanvasPositionEase(chart: dict, indexlist: int | list,
                       easetype: int | list,
                       precision: int | float = 1,
                       inserttype: str = "uniform",
-                      isFailAddAllowed: bool = False) -> list[int]
+                      isFailAddAllowed: bool = False,
+                      *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1873,6 +2181,7 @@ setCanvasPositionEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1899,6 +2208,10 @@ setCanvasPositionEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -1914,7 +2227,8 @@ setCanvasSpeedEase(chart: dict, indexlist: int | list,
                    easetype: int | list,
                    precision: int | float = 1,
                    inserttype: str = "uniform",
-                   isFailAddAllowed: bool = False) -> list[int]
+                   isFailAddAllowed: bool = False,
+                   *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1927,6 +2241,7 @@ setCanvasSpeedEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1954,6 +2269,10 @@ setCanvasSpeedEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -1969,7 +2288,8 @@ setCameraPositionEase(chart: dict, indexlist: int | list,
                       easetype: int | list,
                       precision: int | float = 1,
                       inserttype: str = "uniform",
-                      isFailAddAllowed: bool = False) -> list[int]
+                      isFailAddAllowed: bool = False,
+                      *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -1982,6 +2302,7 @@ setCameraPositionEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2008,6 +2329,10 @@ setCameraPositionEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -2023,7 +2348,8 @@ setCameraScaleEase(chart: dict, indexlist: int | list,
                    easetype: int | list,
                    precision: int | float = 1,
                    inserttype: str = "uniform",
-                   isFailAddAllowed: bool = False) -> list[int]
+                   isFailAddAllowed: bool = False,
+                   *, isReturnException: bool = False) -> list[int]
 ```
 
 **参数**
@@ -2036,6 +2362,7 @@ setCameraScaleEase(chart: dict, indexlist: int | list,
 | `precision` | `int \| float` | 否 | `1` | 插入数量或误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 节点插入策略 |
 | `isFailAddAllowed` | `bool` | 否 | `False` | 失败时是否跳过失败索引并继续 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2063,6 +2390,10 @@ setCameraScaleEase(chart: dict, indexlist: int | list,
 
 成功返回 `[]`；原子模式失败返回 `[失败索引]`；`isFailAddAllowed=True` 返回全部失败索引；整体输入非法返回 `[-1]`。
 
+**异常**
+
+`isReturnException=True` 时忽略 `isFailAddAllowed` 并强制原子回退；任一元素失败会抛出 `RizChartBatchError`，`.failed_indices` 保存失败索引，`.errors` 保存可用异常列表；无法逐项细分时包含聚合原因。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -2085,7 +2416,8 @@ drawPolygon(chart: dict, canvasindex: int, pointlist: list,
             fillerinfo: list | None = None,
             holelist: list | None = None,
             holecolor: list | str = [0, 0, 0, 0],
-            timemultiple: float = 1.65) -> list[int] | None
+            timemultiple: float = 1.65,
+            *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -2104,6 +2436,7 @@ drawPolygon(chart: dict, canvasindex: int, pointlist: list,
 | `holelist` | `list \| None` | 否 | `None` | 孔洞点列表；每个元素是一个闭合孔洞的点规格列表 |
 | `holecolor` | `list \| str` | 否 | `[0,0,0,0]` | 孔洞区域填充线使用的颜色；默认全透明 |
 | `timemultiple` | `float` | 否 | `1.65` | 时间方向视觉倍率；只影响径向/锥形渐变计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2265,6 +2598,10 @@ drawPolygon(chart: dict, canvasindex: int, pointlist: list,
 - `timemultiple` 不为有限正数时返回 `None`。
 - 整体输入非法返回 `None`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartGeometryError` 或其更具体的子类。可能异常：`RizChartGeometryError`, `RizChartColorError`, `RizChartBpmError`, `RizChartFloorPositionError`, `RizChartDrawingError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -2291,7 +2628,8 @@ drawEllipse(chart: dict, canvasindex: int, centerpoint: dict,
             fillerstyle: str | None = None, fillerinfo: list | None = None,
             inserttype: str | None = None,
             insertprecision: object = None,
-            timemultiple: float = 1.65) -> list[int] | None
+            timemultiple: float = 1.65,
+            *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -2314,6 +2652,7 @@ drawEllipse(chart: dict, canvasindex: int, centerpoint: dict,
 | `inserttype` | `str \| None` | 否 | `None` | 非 90° 边框插入策略：`"uniform"` / `"arc"` / `"curvature"` / `"recursion"` / `"priority"` |
 | `insertprecision` | `int \| float \| None` | 否 | `None` | 前三种为每半弧总节点数；后两种为弦高误差阈值 |
 | `timemultiple` | `float` | 否 | `1.65` | 时间方向倍率；有效 `yLength = yLength * timemultiple` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2383,6 +2722,10 @@ drawEllipse(chart: dict, canvasindex: int, centerpoint: dict,
 - 生成线的判定环颜色统一为全透明。
 - 所有线创建完成后统一执行一次 `refresh(mode="all", type="all")`，重新计算 `floorPosition`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartGeometryError` 或其更具体的子类。可能异常：`RizChartGeometryError`, `RizChartColorError`, `RizChartBpmError`, `RizChartFloorPositionError`, `RizChartDrawingError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`8/10`
@@ -2405,7 +2748,8 @@ getClosedRegion(chart: dict, canvasindex: int, lineindexlist: list,
                 isCreateCrossPoint: bool = True,
                 isInsertPoint: bool = True,
                 precision: int | float = 1,
-                inserttype: str = "uniform") -> list[list[dict]] | None
+                inserttype: str = "uniform",
+                *, isReturnException: bool = False) -> list[list[dict]] | None
 ```
 
 **参数**
@@ -2419,6 +2763,7 @@ getClosedRegion(chart: dict, canvasindex: int, lineindexlist: list,
 | `isInsertPoint` | `bool` | 否 | `True` | 是否按实际缓动曲线求交并插入模拟节点 |
 | `precision` | `int \| float` | 否 | `1` | `uniform`/`arc`/`curvature` 为每个原节点区间的插入数量；`recursion`/`priority` 为弦高误差阈值 |
 | `inserttype` | `str` | 否 | `"uniform"` | 插入策略：`"uniform"` / `"arc"` / `"curvature"` / `"recursion"` / `"priority"` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2433,6 +2778,10 @@ getClosedRegion(chart: dict, canvasindex: int, lineindexlist: list,
 - 每个区域按顺时针排列，起点优先取 `lineindexlist` 第一条线的第一个交点对应的点。
 - 没有闭合区域、输入非法或无法形成合法简单区域时返回 `None`。
 - 函数只读取谱面，不修改原 `chart`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartGeometryError` 或其更具体的子类。可能异常：`RizChartGeometryError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2512,7 +2861,8 @@ drawText(chart: dict, canvasindex: int, fontpath: object, text: str,
          padding: float = 0.0,
          timemultiple: float = 1.65,
          isFlipX: bool = False,
-         precision: float | None = None) -> list[int] | None
+         precision: float | None = None,
+         *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -2539,6 +2889,7 @@ drawText(chart: dict, canvasindex: int, fontpath: object, text: str,
 | `timemultiple` | `float` | 否 | `1.65` | Y 方向相对 X 方向的伸缩倍数；必须大于 0 |
 | `isFlipX` | `bool` | 否 | `False` | 以整段文字中心为轴水平镜像 |
 | `precision` | `float \| None` | 否 | `None` | 填充线间距；`None` 时按字号自动取 `max(0.001, fontsize * 0.01)` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2619,6 +2970,10 @@ fontTools shapely numpy Pillow scikit-image
 - 字体缺少对应字符时返回 `None`。
 - 静态字体传入 `weight` 时使用默认字重，不报错。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartFontError` 或其更具体的子类。可能异常：`RizChartFontError`, `RizChartTextLayoutError`, `RizChartGeometryError`, `RizChartDrawingError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`9/10`
@@ -2638,7 +2993,8 @@ drawThinText(chart: dict, canvasindex: int, fontpath: object, text: str,
              align: str = "left",
              timemultiple: float = 1.65,
              isFlipX: bool = False,
-             smoothness: float = 0.5) -> list[int] | None
+             smoothness: float = 0.5,
+             *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -2659,6 +3015,7 @@ drawThinText(chart: dict, canvasindex: int, fontpath: object, text: str,
 | `timemultiple` | `float` | 否 | `1.65` | Y 方向相对 X 方向的伸缩倍数；必须大于 0 |
 | `isFlipX` | `bool` | 否 | `False` | 以整段文字中心为轴水平镜像 |
 | `smoothness` | `float` | 否 | `0.5` | 骨架平滑/细节程度；范围 `0.0` 到 `1.0` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2709,6 +3066,10 @@ fontTools shapely numpy Pillow scikit-image
 - 文本中包含换行符时返回 `None`。
 - 字体缺少对应字符时返回 `None`。
 - 静态字体传入 `weight` 时使用默认字重，不报错。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败抛出 `RizChartFontError` 或其更具体的子类。可能异常：`RizChartFontError`, `RizChartTextLayoutError`, `RizChartGeometryError`, `RizChartDrawingError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import copy
 import heapq
 import math
@@ -1715,3 +1717,6 @@ def setBpmShiftEase(
         items.append(([position], action))
 
     return _run_ease_items(chart, items, isFailAddAllowed, post=_refresh_all)
+
+
+install_exception_api(globals())

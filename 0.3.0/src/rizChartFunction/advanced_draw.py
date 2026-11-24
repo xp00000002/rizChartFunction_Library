@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import copy
 import math
 
@@ -3591,3 +3593,6 @@ def _mask_fill_lines(
             return None
         result.append(masked)
     return result
+
+
+install_exception_api(globals())

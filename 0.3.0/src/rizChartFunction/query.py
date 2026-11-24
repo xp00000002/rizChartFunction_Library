@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import bisect
 import math
 
@@ -19,6 +21,7 @@ from ._internal import (
     _seconds_to_tick as _tick_at_realtime,
 )
 from .chart import mixColor
+from ._shade_opacity_data import SHADE_OPACITY_ALPHA
 
 __all__ = [
     "getFileVersion",
@@ -78,6 +81,13 @@ __all__ = [
     "getNoteCanvas",
     "getXYRatio",
     "getXYRatioByChart",
+    "getXBorder",
+    "getXBorderByChart",
+    "getYBorder",
+    "getYBorderByChart",
+    "getGameScale",
+    "getLineWidth",
+    "getShadeOpacity",
 ]
 
 
@@ -2955,3 +2965,365 @@ def getXYRatioByChart(
     if canvasspeed is None:
         return None
     return getXYRatio(bpm, canvasspeed, gamespeed, value, type)
+
+
+_X_BORDER_TYPES = ("solidLeft", "shadeLeft", "solidRight", "shadeRight")
+
+
+def _x_border_value(
+    canvasposition: float,
+    cameraposition: float,
+    camerascale: float,
+    type: str,
+    isAbsolutePosition: bool,
+) -> float | None:
+    if type not in _X_BORDER_TYPES:
+        return None
+    if not isinstance(isAbsolutePosition, bool):
+        return None
+    if not _is_finite_number(cameraposition):
+        return None
+    if not _is_finite_number(camerascale) or float(camerascale) <= 0.0:
+        return None
+    if not isAbsolutePosition and not _is_finite_number(canvasposition):
+        return None
+
+    camera = float(cameraposition)
+    scale = float(camerascale)
+    canvas = 0.0 if isAbsolutePosition else float(canvasposition)
+    center = camera - canvas
+    half = scale / 2.0
+    shade = scale / 5.625
+
+    if type == "solidLeft":
+        return center - half
+    if type == "shadeLeft":
+        return center - half + shade
+    if type == "solidRight":
+        return center + half
+    return center + half - shade
+
+
+def getXBorder(
+    canvasposition: float = 0.0,
+    cameraposition: float = 0.0,
+    camerascale: float = 1.0,
+    type: str = "solidLeft",
+    isAbsolutePosition: bool = False,
+) -> float | None:
+    """计算指定摄像机参数下的可视 X 边界。
+
+    ``isAbsolutePosition=False`` 时结果会减去 ``canvasposition``；
+    ``True`` 时忽略 ``canvasposition``。``camerascale`` 必须大于 0。
+    失败返回 ``None``。
+    """
+    return _x_border_value(
+        canvasposition,
+        cameraposition,
+        camerascale,
+        type,
+        isAbsolutePosition,
+    )
+
+
+def getXBorderByChart(
+    chart: dict,
+    time: float,
+    index: int = 0,
+    type: str = "solidLeft",
+    isRealTime: bool = False,
+    isAbsolutePosition: bool = False,
+) -> float | None:
+    """从谱面插值摄像机和画布参数后计算可视 X 边界。
+
+    ``canvasposition``、``cameraposition``、``camerascale`` 分别由
+    指定画布、摄像机位置和摄像机缩放在 ``time`` 处按缓动插值得到。
+    ``isAbsolutePosition=True`` 时忽略 ``index`` 并对画布位置项置零。
+    ``isRealTime=True`` 时 ``time`` 是实际秒数。失败返回 ``None``。
+    """
+    if not isinstance(chart, dict):
+        return None
+    if not _is_finite_number(time) or float(time) < 0.0:
+        return None
+    if not isinstance(isRealTime, bool) or not isinstance(isAbsolutePosition, bool):
+        return None
+    if type not in _X_BORDER_TYPES:
+        return None
+
+    camera_position = getCameraPositionAt(chart, time, isRealTime)
+    if camera_position is None:
+        return None
+    camera_scale = getCameraScaleAt(chart, time, isRealTime)
+    if camera_scale is None or float(camera_scale) <= 0.0:
+        return None
+
+    if isAbsolutePosition:
+        canvas_position = 0.0
+    else:
+        if not _is_int(index):
+            return None
+        canvas_position = getCanvasPositionAt(chart, time, index, isRealTime)
+        if canvas_position is None:
+            return None
+
+    return _x_border_value(
+        canvas_position,
+        camera_position,
+        camera_scale,
+        type,
+        isAbsolutePosition,
+    )
+
+
+_Y_BORDER_COEFFICIENTS = {
+    "solidTop": 6.5,
+    "shadeTop": 5.5,
+    "solidLineBottom": -0.5,
+    "shadeLineBottom": 0.5,
+    "solidBottom": -1.5,
+    "shadeBottom": -0.5,
+}
+
+
+def _y_border_coefficient(type: object) -> float | None:
+    if not isinstance(type, str):
+        return None
+    return _Y_BORDER_COEFFICIENTS.get(type)
+
+
+def getYBorder(
+    bpm: float,
+    canvasspeed: float,
+    gamespeed: float,
+    type: str = "solidTop",
+    isReturnRealTime: bool = False,
+) -> float | None:
+    """计算恒定 BPM/画布流速下的可视 Y 边界。
+
+    ``type`` 可取值见 :data:`_Y_BORDER_COEFFICIENTS`；结果默认为 tick
+    （节拍）数，``isReturnRealTime=True`` 时按 BPM 转为实际秒数。
+    ``canvasspeed=0`` 时返回 ``NaN``；其它非法输入返回 ``None``。
+    """
+    coefficient = _y_border_coefficient(type)
+    if coefficient is None or not isinstance(isReturnRealTime, bool):
+        return None
+    if not _is_finite_number(bpm) or float(bpm) <= 0.0:
+        return None
+    if not _is_finite_number(canvasspeed):
+        return None
+    if not _is_finite_number(gamespeed) or float(gamespeed) <= 0.0:
+        return None
+
+    k = 6.0 + 7.0 * (float(gamespeed) - 1.0) / 9.0
+    denominator = 60.0 * float(canvasspeed) * k
+    if denominator == 0.0:
+        return math.nan
+
+    w = float(bpm) / denominator
+    result = coefficient * w
+    if isReturnRealTime:
+        result = result * 60.0 / float(bpm)
+    return result
+
+
+def _y_border_events(chart: dict, index: int) -> list[float] | None:
+    bpm_shifts = getBpmShift(chart, 0, -1)
+    if not isinstance(bpm_shifts, list):
+        return None
+    speed_points = getCanvasSpeed(chart, index, 0, -1)
+    if not isinstance(speed_points, list):
+        return None
+    events = {0.0}
+    for item in bpm_shifts:
+        if not isinstance(item, dict):
+            return None
+        time = item.get("time")
+        if not _is_finite_number(time) or float(time) < 0.0:
+            return None
+        events.add(float(time))
+    for item in speed_points:
+        if not isinstance(item, dict):
+            return None
+        time = item.get("time")
+        if not _is_finite_number(time) or float(time) < 0.0:
+            return None
+        events.add(float(time))
+    return sorted(events)
+
+
+def _y_border_sample(
+    chart: dict,
+    index: int,
+    time: float,
+) -> tuple[float, float] | None:
+    sample_time = 0.0 if time < 0.0 else time
+    bpm = getBpmAt(chart, sample_time)
+    if bpm is None or float(bpm) <= 0.0:
+        return None
+    speed = getCanvasSpeedAt(chart, index, sample_time)
+    if speed is None:
+        return None
+    return float(bpm), float(speed)
+
+
+def getYBorderByChart(
+    chart: dict,
+    time: float,
+    index: int,
+    gamespeed: float,
+    type: str = "solidTop",
+    isRealTime: bool = False,
+    isReturnRealTime: bool = False,
+) -> float | None:
+    """从谱面分段积分计算可视 Y 边界。
+
+    从查询 tick 向边界方向前进，按 BPM/画布流速关键点切段，每段使用
+    ``段 W = 段 tick 长度 / 当前段 W`` 累加，直到达到边界系数对应的
+    W 数。``isReturnRealTime=True`` 时再按每段实际 BPM 积分换算为秒。
+    失败返回 ``None``；零画布流速导致除零时返回 ``NaN``。
+    """
+    if not isinstance(chart, dict):
+        return None
+    if not _is_finite_number(time) or float(time) < 0.0:
+        return None
+    if not _is_int(index):
+        return None
+    if not _is_finite_number(gamespeed) or float(gamespeed) <= 0.0:
+        return None
+    coefficient = _y_border_coefficient(type)
+    if coefficient is None:
+        return None
+    if not isinstance(isRealTime, bool) or not isinstance(isReturnRealTime, bool):
+        return None
+
+    start_tick = _query_tick(chart, float(time), isRealTime)
+    if start_tick is None:
+        return None
+    events = _y_border_events(chart, index)
+    if events is None:
+        return None
+
+    k = 6.0 + 7.0 * (float(gamespeed) - 1.0) / 9.0
+    direction = 1.0 if coefficient > 0.0 else -1.0
+    remaining = abs(float(coefficient))
+    position = start_tick
+    total_ticks = 0.0
+    total_seconds = 0.0
+
+    while remaining > 1e-12:
+        if direction > 0.0:
+            next_index = bisect.bisect_right(events, position)
+            end = events[next_index] if next_index < len(events) else None
+        else:
+            previous_index = bisect.bisect_left(events, position) - 1
+            end = events[previous_index] if previous_index >= 0 else None
+
+        if end is None:
+            sample = position + direction * 0.5
+            span = None
+        else:
+            sample = (position + end) / 2.0
+            span = abs(end - position)
+
+        sample_values = _y_border_sample(chart, index, sample)
+        if sample_values is None:
+            return None
+        bpm, speed = sample_values
+        if speed < 0.0:
+            return None
+        w = bpm / (60.0 * speed * k)
+        if w == 0.0 or not math.isfinite(w):
+            return math.nan
+        if w < 0.0:
+            return None
+
+        units_per_tick = 1.0 / w
+        if span is None:
+            needed_ticks = remaining / units_per_tick
+            total_ticks += needed_ticks
+            total_seconds += needed_ticks * 60.0 / bpm
+            remaining = 0.0
+        else:
+            contribution = span * units_per_tick
+            if contribution >= remaining:
+                needed_ticks = remaining / units_per_tick
+                total_ticks += needed_ticks
+                total_seconds += needed_ticks * 60.0 / bpm
+                remaining = 0.0
+            else:
+                total_ticks += span
+                total_seconds += span * 60.0 / bpm
+                remaining -= contribution
+                position = end
+
+    if isReturnRealTime:
+        return total_seconds * direction
+    return total_ticks * direction
+
+
+def getGameScale(
+    Xwidth: float,
+    Ywidth: float,
+    isPCVersion: bool = False,
+) -> float | None:
+    """根据屏幕宽高计算游戏区域缩放比例。
+
+    ``Xwidth`` / ``Ywidth`` 必须大于 0。移动端返回 ``Sx``；PC 端返回
+    ``Sx * Sc``。失败返回 ``None``。
+    """
+    if not _is_finite_number(Xwidth) or float(Xwidth) <= 0.0:
+        return None
+    if not _is_finite_number(Ywidth) or float(Ywidth) <= 0.0:
+        return None
+    if not isinstance(isPCVersion, bool):
+        return None
+
+    ratio = float(Xwidth) / float(Ywidth)
+    if isPCVersion:
+        sx = 32.0 / 29.0
+        sc = ratio * 9.0 / 16.0 if ratio <= 16.0 / 9.0 else 1.0
+        return sx * sc
+
+    if ratio <= 18.0 / 29.0:
+        return ratio * 16.0 / 9.0
+    return 32.0 / 29.0
+
+
+def getLineWidth(
+    gamescale: float = 1.0,
+) -> float | None:
+    """计算引导线宽，单位为 ``xPosition``。
+
+    ``gamescale`` 必须大于 0；成功返回 ``1 / (125 * gamescale)``。
+    """
+    if not _is_finite_number(gamescale) or float(gamescale) <= 0.0:
+        return None
+    return 1.0 / (125.0 * float(gamescale))
+
+
+_SHADE_THRESHOLDS = tuple(index / 511.0 for index in range(512))
+
+
+def getShadeOpacity(ratio: float) -> int | None:
+    """查询底部到顶部遮罩在相对比例处的透明度。
+
+    ``ratio`` 必须在 ``0.0`` 到 ``1.0`` 之间（包含两端）。按
+    ``row/511 <= ratio < (row + 1)/511`` 选择内置表中的一行，
+    ``ratio=1.0`` 时取最后一行，返回该行
+    ``round(alpha_mean_0_255)``。失败返回 ``None``。
+    """
+    if not _is_finite_number(ratio):
+        return None
+    value = float(ratio)
+    if value < 0.0 or value > 1.0:
+        return None
+
+    row = bisect.bisect_right(_SHADE_THRESHOLDS, value) - 1
+    if row < 0:
+        return None
+    if row >= len(SHADE_OPACITY_ALPHA):
+        row = len(SHADE_OPACITY_ALPHA) - 1
+    return SHADE_OPACITY_ALPHA[row]
+
+
+install_exception_api(globals())

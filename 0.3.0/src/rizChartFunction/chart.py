@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import bisect
 import math
 
@@ -49,6 +51,7 @@ __all__ = [
     "setCameraScale",
     "deleteCameraScale",
     "createLinePoint",
+    "createLineColor",
     "createRingPoint",
     "addRingPoint",
     "setRingPoint",
@@ -61,6 +64,7 @@ __all__ = [
     "addLineColor",
     "setLineColor",
     "deleteLineColor",
+    "createNote",
     "addNote",
     "setNote",
     "deleteNote",
@@ -4300,3 +4304,6 @@ def deleteBpmShift(
         return None
     _apply_floor_plan(plan)
     return old_spec
+
+
+install_exception_api(globals())

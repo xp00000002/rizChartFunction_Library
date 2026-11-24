@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from ._exception_wrapper import install_exception_api
+
 import copy
 import math
 
@@ -2453,3 +2455,6 @@ def copyCamera(
         destructive=copymode == "replace",
         isFailAddAllowed=False,
     )
+
+
+install_exception_api(globals())

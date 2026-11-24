@@ -5,6 +5,8 @@
 `base.py` 负责谱面的创建、读取、校验、导出与刷新。
 
 > 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+>
+> 所有可失败函数额外接受 keyword-only `isReturnException`；设为 `True` 时失败抛出自定义异常，详见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 ## 目录
 
@@ -64,6 +66,10 @@ canvasMoves       list   默认含 index=0 的画布
 cameraMove        dict   默认含缩放与横向移动节点
 ```
 
+**异常**
+
+本函数没有失败返回值，因此不提供 `isReturnException` 参数。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -84,7 +90,7 @@ print(chart["bPM"])  # 175.0
 **函数声明**
 
 ```python
-load(filename: str, basebpm: float | None = None) -> dict | None
+load(filename: str, basebpm: float | None = None, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -93,6 +99,7 @@ load(filename: str, basebpm: float | None = None) -> dict | None
 | --- | --- | --- | --- | --- |
 | `filename` | `str` | 是 | - | 谱面文件路径（UTF-8 / UTF-8 BOM） |
 | `basebpm` | `float \| None` | 否 | `None` | 指定基准 BPM；不为 `None` 时覆盖文件中的 `bPM` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -130,6 +137,10 @@ load(filename: str, basebpm: float | None = None) -> dict | None
 - 缺少 `bPM` 且未提供 `basebpm`：`None`。
 - `bPM <= 0` 且未提供正数 `basebpm`：`None`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。读取、JSON 或结构失败时抛 `RizChartLoadError`。可能异常：`RizChartLoadError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -153,7 +164,7 @@ chart = load(r"E:\RizChartTool\input\20260109\Chart_IN", basebpm=175.0)
 **函数声明**
 
 ```python
-export(chartlist: dict, filename: str) -> bool
+export(chartlist: dict, filename: str, *, isReturnException: bool = False) -> bool
 ```
 
 **参数**
@@ -162,6 +173,7 @@ export(chartlist: dict, filename: str) -> bool
 | --- | --- | --- | --- | --- |
 | `chartlist` | `dict` | 是 | - | 谱面 dict |
 | `filename` | `str` | 是 | - | 导出路径 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -191,6 +203,10 @@ export(chartlist: dict, filename: str) -> bool
 成功返回 `True`；结构非法、存在多余/缺失键、值越界、引用错误、路径不可写
 或 JSON 序列化失败时返回 `False`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。失败时抛 `RizChartExportError`。可能异常：`RizChartExportError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -212,7 +228,7 @@ if not export(chart, r"E:\RizChartTool\output\chart.json"):
 **函数声明**
 
 ```python
-check(chart: dict) -> dict | None
+check(chart: dict, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -220,6 +236,7 @@ check(chart: dict) -> dict | None
 | 参数 | 类型 | 必需 | 默认值 | 说明 |
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -257,6 +274,10 @@ check(chart: dict) -> dict | None
 }
 ```
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。发现问题时抛 `RizChartValidationError`，`.issues` 保存原问题 Dict。可能异常：`RizChartValidationError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -281,7 +302,8 @@ if issues is not None:
 refresh(chart: dict, mode: str = "all", type: str = "all",
         startindex: int = 0, endindex: int = -1,
         startlineindex: int = 0, endlineindex: int = -1,
-        isOnlyRefreshNaN: bool = False) -> bool | None
+        isOnlyRefreshNaN: bool = False,
+        *, isReturnException: bool = False) -> bool | None
 ```
 
 **参数**
@@ -296,6 +318,7 @@ refresh(chart: dict, mode: str = "all", type: str = "all",
 | `startlineindex` | `int` | 否 | `0` | 起始线索引，仅 `linePoints` / `notes` / `judgeRingColor` / `lineColor` 使用 |
 | `endlineindex` | `int` | 否 | `-1` | 结束线索引，仅上述四种类型使用 |
 | `isOnlyRefreshNaN` | `bool` | 否 | `False` | 只重算当前值为 `NaN` 的 `floorPosition`；`mode="order"` 时无效 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 `mode` 取值：
 
@@ -367,6 +390,10 @@ refresh(chart: dict, mode: str = "all", type: str = "all",
 - 选中范围内有顺序或高度变化：修改谱面并返回 `True`。
 - 选中范围内无变化：返回 `False`。
 - 参数非法、结构非法或无法重算：返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。返回 `False` 是成功无变化；返回 `None` 的失败改为抛出具体异常。可能异常：`RizChartStructureError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartFloorPositionError`, `RizChartTransactionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 

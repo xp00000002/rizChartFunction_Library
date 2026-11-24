@@ -1,6 +1,6 @@
-# rizChartFunction 0.2.0
+# rizChartFunction 0.3.0
 
-> 本目录是 `rizChartFunction` 的 `0.2.0` 版本快照。安装、导入和文档路径均相对于当前 `0.2.0/` 目录。
+> 本目录是 `rizChartFunction` 的 `0.3.0` 版本快照。安装、导入和文档路径均相对于当前 `0.3.0/` 目录。
 
 `rizChartFunction` 是一个用于创建、读取、编辑、校验、查询和导出 Rizline 谱面
 （JSON）的 Python 库。
@@ -15,7 +15,7 @@
 - 严格的谱面导入、清洗、校验和导出
 - 完整的函数文档与可离线运行的参数示意图工具
 
-当前公开 API 共 149 个函数，完整说明见 [文档总览](docs/README.md)。
+当前公开 API 共 157 个函数，完整说明见 [文档总览](docs/README.md)。
 
 ## 拉取、导入与声明
 
@@ -23,7 +23,7 @@
 
 ```bash
 git clone https://github.com/xp00000002/rizChartFunction_Library.git
-cd rizChartFunction_Library/0.2.0
+cd rizChartFunction_Library/0.3.0
 ```
 
 ### 安装
@@ -98,7 +98,7 @@ rcf.export(chart, "chart.json")
 ## 项目结构
 
 ```text
-0.2.0/
+0.3.0/
 ├── src/
 │   └── rizChartFunction/       # 核心库源码
 │       ├── base.py             # new/load/export/check/refresh
@@ -108,7 +108,8 @@ rcf.export(chart, "chart.json")
 │       ├── advanced_copy.py    # 跨谱面复制实现
 │       ├── advanced_ease.py    # 缓动与批量颜色修改
 │       ├── advanced_draw.py    # 多边形、椭圆、闭合区域
-│       └── advanced_font.py    # 文字填充与细字骨架
+│       ├── advanced_font.py    # 文字填充与细字骨架
+│       └── exceptions.py       # 自定义异常类
 │
 ├── docs/                       # 完整文档
 │   ├── README.md               # 文档总览
@@ -116,6 +117,7 @@ rcf.export(chart, "chart.json")
 │   ├── chart.md                # chart 模块
 │   ├── query.md                # query 模块
 │   ├── advanced.md             # advanced 模块
+│   ├── EXCEPTIONS.md           # 自定义异常与 isReturnException
 │   ├── PERFORMANCE.md          # 性能标注说明
 │   └── TECHNICAL.md            # 内部实现与维护说明
 │
@@ -134,6 +136,7 @@ rcf.export(chart, "chart.json")
 - [chart 模块](docs/chart.md)
 - [query 模块](docs/query.md)
 - [advanced 模块](docs/advanced.md)
+- [自定义异常说明](docs/EXCEPTIONS.md)
 - [性能标注说明](docs/PERFORMANCE.md)
 - [内部实现说明](docs/TECHNICAL.md)
 

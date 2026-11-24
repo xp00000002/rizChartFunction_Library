@@ -5,6 +5,8 @@
 `chart.py` 负责颜色工具、主题/Riztime、画布、摄像机、引导线、Note 与 BPM 的创建和修改。
 
 > 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
+>
+> 所有可失败函数额外接受 keyword-only `isReturnException`；设为 `True` 时失败抛出自定义异常，详见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 ## 延迟计算
 
@@ -85,7 +87,7 @@
 **函数声明**
 
 ```python
-setBaseBpm(chart: dict, basebpm: float, isFixedBpm: bool = False) -> object | None
+setBaseBpm(chart: dict, basebpm: float, isFixedBpm: bool = False, *, isReturnException: bool = False) -> object | None
 ```
 
 **参数**
@@ -95,6 +97,7 @@ setBaseBpm(chart: dict, basebpm: float, isFixedBpm: bool = False) -> object | No
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `basebpm` | `float` | 是 | - | 新的基准 BPM |
 | `isFixedBpm` | `bool` | 否 | `False` | 是否保持实际 BPM 不变 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -115,6 +118,10 @@ setBaseBpm(chart: dict, basebpm: float, isFixedBpm: bool = False) -> object | No
 **返回值**
 
 成功返回原 `bPM`。谱面缺少 `time=0.0` BPM 节点、结构非法、新 BPM 不为正数、固定 BPM 时缺少 `bpmShifts` 或节点非法、无法计算 `floorPosition` 等情况下返回 `None`，且不做部分修改。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartBpmError`；可能异常：`RizChartBpmError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -143,7 +150,7 @@ print(chart2["bPM"], chart2["bpmShifts"][0]["value"])  # 350.0 0.5
 **函数声明**
 
 ```python
-setDelay(chart: dict, delay: int) -> object | None
+setDelay(chart: dict, delay: int, *, isReturnException: bool = False) -> object | None
 ```
 
 **参数**
@@ -152,6 +159,7 @@ setDelay(chart: dict, delay: int) -> object | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `delay` | `int` | 是 | - | 新的谱面延迟，单位 ms |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -167,6 +175,10 @@ setDelay(chart: dict, delay: int) -> object | None
 
 类型不正确或其他原因无法修改时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -178,7 +190,7 @@ setDelay(chart: dict, delay: int) -> object | None
 **函数声明**
 
 ```python
-setFileVersion(chart: dict, fileversion: int) -> object | None
+setFileVersion(chart: dict, fileversion: int, *, isReturnException: bool = False) -> object | None
 ```
 
 **参数**
@@ -187,6 +199,7 @@ setFileVersion(chart: dict, fileversion: int) -> object | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `fileversion` | `int` | 是 | - | 新的文件版本 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -201,6 +214,10 @@ setFileVersion(chart: dict, fileversion: int) -> object | None
 修改 `fileVersion`，返回原值。
 
 类型不正确或其他原因无法修改时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -240,6 +257,10 @@ rgb(red: int | float, green: int | float, blue: int | float) -> list[int]
 
 返回 `[r, g, b, 255]`，例如 `rgb(52, 0.6, 255)` 返回 `[52, 153, 255, 255]`。
 
+**异常**
+
+本函数没有失败返回值，因此不提供 `isReturnException` 参数。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -277,6 +298,10 @@ rgba(red: int | float, green: int | float, blue: int | float, alpha: int | float
 
 返回 `[r, g, b, a]`，例如 `rgba(52, 0.6, 255, 0.5)` 返回 `[52, 153, 255, 128]`。
 
+**异常**
+
+本函数没有失败返回值，因此不提供 `isReturnException` 参数。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -288,7 +313,7 @@ rgba(red: int | float, green: int | float, blue: int | float, alpha: int | float
 **函数声明**
 
 ```python
-mixColor(basecolor: str | list, covercolor: str | list) -> list[int] | None
+mixColor(basecolor: str | list, covercolor: str | list, *, isReturnException: bool = False) -> list[int] | None
 ```
 
 **参数**
@@ -297,6 +322,7 @@ mixColor(basecolor: str | list, covercolor: str | list) -> list[int] | None
 | --- | --- | --- | --- | --- |
 | `basecolor` | `str \| list` | 是 | - | 基础色 |
 | `covercolor` | `str \| list` | 是 | - | 覆盖色 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -325,6 +351,10 @@ A0 = A1
 
 返回 `[r, g, b, a]`；输入非法时返回 `None`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartColorError`；可能异常：`RizChartColorError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -346,7 +376,8 @@ mixColor([255, 0, 0, 255], [0, 0, 255, 128])
 
 ```python
 splitColor(mixcolor: str | list, basecolor: str | list | None = None,
-           covercolor: str | list | None = None) -> list[int] | bool | None
+           covercolor: str | list | None = None,
+           *, isReturnException: bool = False) -> list[int] | bool | None
 ```
 
 **参数**
@@ -356,6 +387,7 @@ splitColor(mixcolor: str | list, basecolor: str | list | None = None,
 | `mixcolor` | `str \| list` | 是 | - | 混合颜色 |
 | `basecolor` | `str \| list \| None` | 否 | `None` | 基础色；`None` 表示推导基础色 |
 | `covercolor` | `str \| list \| None` | 否 | `None` | 覆盖色；`None` 表示推导覆盖色 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -380,6 +412,10 @@ splitColor(mixcolor: str | list, basecolor: str | list | None = None,
 
 若 `mixcolor` 的 RGB 与覆盖色不一致，则不存在可行基础色，返回 `None`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值。输入颜色非法时抛 `RizChartColorError`；同时提供基础和覆盖色但混合结果不匹配时抛 `RizChartColorMismatchError`。可能异常：`RizChartColorError`, `RizChartColorMismatchError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -402,7 +438,7 @@ splitColor(mix, [255, 0, 0, 255], [0, 0, 255, 128])  # True
 **函数声明**
 
 ```python
-setNormalTheme(chart: dict, color1, color2, color3) -> dict | None
+setNormalTheme(chart: dict, color1, color2, color3, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -413,6 +449,7 @@ setNormalTheme(chart: dict, color1, color2, color3) -> dict | None
 | `color1` | `str \| list` | 是 | - | 第一个颜色 |
 | `color2` | `str \| list` | 是 | - | 第二个颜色 |
 | `color3` | `str \| list` | 是 | - | 第三个颜色 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -430,6 +467,10 @@ setNormalTheme(chart: dict, color1, color2, color3) -> dict | None
 设置 `themes[0].colorsList` 的三种颜色，返回原主题的规格 Dict。
 
 格式错误、超出范围或无法修改时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartThemeError`；可能异常：`RizChartThemeError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -455,7 +496,8 @@ setNormalTheme(chart, rgb(26, 0.1, 46), "#FFFFFF", [0, 0, 0])
 ```python
 setRiztime(chart: dict, index: int = -1, color1=None, color2=None, color3=None,
            start: float | None = None, end: float | None = None,
-           transtime: float | None = None, checkpoint: float | None = None) -> dict | None
+           transtime: float | None = None, checkpoint: float | None = None,
+           *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -471,6 +513,7 @@ setRiztime(chart: dict, index: int = -1, color1=None, color2=None, color3=None,
 | `end` | `float \| None` | 否 | `None` | Riztime 结束时间；`None` 表示不修改 |
 | `transtime` | `float \| None` | 否 | `None` | 转换时间；`None` 表示不修改 |
 | `checkpoint` | `float \| None` | 否 | `None` | 检查点；`None` 表示不修改 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -497,6 +540,10 @@ setRiztime(chart: dict, index: int = -1, color1=None, color2=None, color3=None,
 成功时返回原 Riztime 的合并规格 Dict。
 
 所有可选参数为 `None` 时直接 返回原规格且不做修改。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartThemeError`；可能异常：`RizChartThemeError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -532,7 +579,8 @@ setRiztime(chart, index=-1, start=0.0, end=10.0)
 ```python
 addRiztime(chart: dict, color1, color2, color3,
            start: float = 0.0, end: float = 0.0,
-           transtime: float = 0.5, checkpoint: float = 0.0) -> int | None
+           transtime: float = 0.5, checkpoint: float = 0.0,
+           *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -547,6 +595,7 @@ addRiztime(chart: dict, color1, color2, color3,
 | `end` | `float` | 否 | `0.0` | 结束时间，必须大于等于 `start` |
 | `transtime` | `float` | 否 | `0.5` | 转换时间，必须大于等于 `0.0` |
 | `checkpoint` | `float` | 否 | `0.0` | 检查点 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -567,6 +616,10 @@ addRiztime(chart: dict, color1, color2, color3,
 **返回值**
 
 成功返回插入后的 `challengeTimes` 索引（从 `0` 开始）；颜色、时间、结构或顺序不合法而无法插入时返回 `None`，且不修改谱面。注意 `setRiztime()` / `deleteRiztime()` 的 `index` 使用从 `1` 开始的 Riztime 索引。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartThemeError`；可能异常：`RizChartThemeError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -600,7 +653,7 @@ if riztime_index is None:
 **函数声明**
 
 ```python
-deleteRiztime(chart: dict, index: int = -1) -> dict | None
+deleteRiztime(chart: dict, index: int = -1, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -609,6 +662,7 @@ deleteRiztime(chart: dict, index: int = -1) -> dict | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int` | 否 | `-1` | 删除索引，规则同 `setRiztime()` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -619,6 +673,10 @@ deleteRiztime(chart: dict, index: int = -1) -> dict | None
 成功时返回被删除 Riztime 的合并规格 Dict。
 
 索引不存在、指向 Normal Theme 或无法删除时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartThemeError`；可能异常：`RizChartThemeError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -647,7 +705,7 @@ print(removed["colorsList"])
 **函数声明**
 
 ```python
-addCanvas(chart: dict, index: int | None = None) -> int | None
+addCanvas(chart: dict, index: int | None = None, *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -656,6 +714,7 @@ addCanvas(chart: dict, index: int | None = None) -> int | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int \| None` | 否 | `None` | 插入位置；0 表示最前，负值从末尾计算，`None` 表示末尾 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -680,6 +739,10 @@ addCanvas(chart: dict, index: int | None = None) -> int | None
 成功返回新画布的 `index`。
 
 结构非法、画布索引不连续或越界时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -707,7 +770,7 @@ print([canvas["index"] for canvas in chart["canvasMoves"]])  # [0, 1]
 **函数声明**
 
 ```python
-deleteCanvas(chart: dict, index: int = -1, isRelative: bool = False) -> dict | None
+deleteCanvas(chart: dict, index: int = -1, isRelative: bool = False, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -717,6 +780,7 @@ deleteCanvas(chart: dict, index: int = -1, isRelative: bool = False) -> dict | N
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int` | 否 | `-1` | 画布索引或空画布索引，0 起，负数从末尾计算 |
 | `isRelative` | `bool` | 否 | `False` | 是否在所有空画布中按相对位置选择 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -737,6 +801,10 @@ deleteCanvas(chart: dict, index: int = -1, isRelative: bool = False) -> dict | N
 成功返回被删除画布的规格 Dict。
 
 索引不存在、画布非空、结构非法或无法删除 时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -770,7 +838,8 @@ if deleted is None:
 ```python
 addCanvasPosition(chart: dict, index: int, time: float,
                   position: float = 0.0, easetype: int = 0,
-                  isRealTime: bool = False) -> int | None
+                  isRealTime: bool = False,
+                  *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -783,6 +852,7 @@ addCanvasPosition(chart: dict, index: int, time: float,
 | `position` | `float` | 否 | `0.0` | 节点 x 坐标，写入节点的 `value` |
 | `easetype` | `int` | 否 | `0` | 缓动类型；大于 18 视为 18，小于 0 视为 0 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -803,6 +873,10 @@ addCanvasPosition(chart: dict, index: int, time: float,
 **返回值**
 
 成功返回插入后的关键点索引；画布或节点结构非法、时间/坐标无效时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -833,7 +907,8 @@ setCanvasPosition(chart: dict, canvasindex: int,
                   positionindex: int = -1, time: float | None = None,
                   position: float | None = None,
                   easetype: int | None = None,
-                  isRealTime: bool = False) -> dict | None
+                  isRealTime: bool = False,
+                  *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -847,6 +922,7 @@ setCanvasPosition(chart: dict, canvasindex: int,
 | `position` | `float \| None` | 否 | `None` | 新 x 坐标；`None` 表示不修改 |
 | `easetype` | `int \| None` | 否 | `None` | 新缓动类型；大于 18 视为 18，小于 0 视为 0；`None` 表示不修改 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -871,6 +947,10 @@ setCanvasPosition(chart: dict, canvasindex: int,
 成功返回修改前的原节点的规格 Dict。
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -899,7 +979,8 @@ setCanvasPosition(chart, 0, 1, time=2.0)
 
 ```python
 deleteCanvasPosition(chart: dict, canvasindex: int,
-                     positionindex: int = -1) -> dict | None
+                     positionindex: int = -1,
+                     *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -909,6 +990,7 @@ deleteCanvasPosition(chart: dict, canvasindex: int,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `canvasindex` | `int` | 是 | - | 画布索引，0 起，负数从末尾计算 |
 | `positionindex` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -925,6 +1007,10 @@ deleteCanvasPosition(chart: dict, canvasindex: int,
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -959,7 +1045,8 @@ addCanvasSpeed(chart: dict, index: int, time: float,
                speed: float = 1.0,
                isDelayCalculate: bool = False,
                isChangeZeroSpeed: bool = True,
-               isRealTime: bool = False) -> int | None
+               isRealTime: bool = False,
+               *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -973,6 +1060,7 @@ addCanvasSpeed(chart: dict, index: int, time: float,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isChangeZeroSpeed` | `bool` | 否 | `True` | 是否调整接近 0 的流速 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1005,6 +1093,10 @@ addCanvasSpeed(chart: dict, index: int, time: float,
 **返回值**
 
 成功返回插入后的关键点索引；参数、结构或画布索引非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1039,7 +1131,8 @@ setCanvasSpeed(chart: dict, canvasindex: int,
                speed: float | None = None,
                isDelayCalculate: bool = False,
                isChangeZeroSpeed: bool = True,
-               isRealTime: bool = False) -> dict | None
+               isRealTime: bool = False,
+               *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1054,6 +1147,7 @@ setCanvasSpeed(chart: dict, canvasindex: int,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isChangeZeroSpeed` | `bool` | 否 | `True` | 是否调整接近 0 的流速 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1083,6 +1177,10 @@ setCanvasSpeed(chart: dict, canvasindex: int,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`6/10`
@@ -1111,7 +1209,8 @@ setCanvasSpeed(chart, 0, 1, time=2.0)
 ```python
 deleteCanvasSpeed(chart: dict, canvasindex: int,
                   speedindex: int = -1,
-                  isDelayCalculate: bool = False) -> dict | None
+                  isDelayCalculate: bool = False,
+                  *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1122,6 +1221,7 @@ deleteCanvasSpeed(chart: dict, canvasindex: int,
 | `canvasindex` | `int` | 是 | - | 画布索引，0 起，负数从末尾计算 |
 | `speedindex` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1145,6 +1245,10 @@ deleteCanvasSpeed(chart: dict, canvasindex: int,
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1176,7 +1280,8 @@ old_first = deleteCanvasSpeed(chart, 0, 0)
 
 ```python
 addCameraPosition(chart: dict, time: float, position: float = 0.0,
-                  easetype: int = 0, isRealTime: bool = False) -> int | None
+                  easetype: int = 0, isRealTime: bool = False,
+                  *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -1188,6 +1293,7 @@ addCameraPosition(chart: dict, time: float, position: float = 0.0,
 | `position` | `float` | 否 | `0.0` | 节点 x 坐标，写入节点的 `value` |
 | `easetype` | `int` | 否 | `0` | 缓动类型，夹取到 0-18 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数（需要 `time=0.0` 的 BPM 节点） |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1208,6 +1314,10 @@ addCameraPosition(chart: dict, time: float, position: float = 0.0,
 **返回值**
 
 成功返回插入后的关键点索引；参数或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1233,7 +1343,8 @@ setCameraPosition(chart: dict, index: int = -1,
                   time: float | None = None,
                   position: float | None = None,
                   easetype: int | None = None,
-                  isRealTime: bool = False) -> dict | None
+                  isRealTime: bool = False,
+                  *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1246,6 +1357,7 @@ setCameraPosition(chart: dict, index: int = -1,
 | `position` | `float \| None` | 否 | `None` | 新 x 坐标；`None` 表示不修改 |
 | `easetype` | `int \| None` | 否 | `None` | 新缓动类型，夹取到 0-18；`None` 表示不修改 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1271,6 +1383,10 @@ setCameraPosition(chart: dict, index: int = -1,
 
 索引不存在或参数非法时返回 `None`，且不修改 谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -1294,7 +1410,7 @@ print(old)  # 修改前的节点
 **函数声明**
 
 ```python
-deleteCameraPosition(chart: dict, index: int = -1) -> dict | None
+deleteCameraPosition(chart: dict, index: int = -1, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1303,6 +1419,7 @@ deleteCameraPosition(chart: dict, index: int = -1) -> dict | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1320,6 +1437,10 @@ deleteCameraPosition(chart: dict, index: int = -1) -> dict | None
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -1332,7 +1453,8 @@ deleteCameraPosition(chart: dict, index: int = -1) -> dict | None
 
 ```python
 addCameraScale(chart: dict, time: float, scale: float = 1.0,
-               easetype: int = 0, isRealTime: bool = False) -> int | None
+               easetype: int = 0, isRealTime: bool = False,
+               *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -1344,6 +1466,7 @@ addCameraScale(chart: dict, time: float, scale: float = 1.0,
 | `scale` | `float` | 否 | `1.0` | 缩放比例，必须大于 `0.0`，但不限制在 0.1-10.0 内 |
 | `easetype` | `int` | 否 | `0` | 缓动类型，夹取到 0-18 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数（需要 `time=0.0` 的 BPM 节点） |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1360,6 +1483,10 @@ addCameraScale(chart: dict, time: float, scale: float = 1.0,
 **返回值**
 
 成功返回插入后的关键点索引；`scale <= 0.0`、参数或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1388,7 +1515,8 @@ setCameraScale(chart: dict, index: int = -1,
                time: float | None = None,
                scale: float | None = None,
                easetype: int | None = None,
-               isRealTime: bool = False) -> dict | None
+               isRealTime: bool = False,
+               *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1401,6 +1529,7 @@ setCameraScale(chart: dict, index: int = -1,
 | `scale` | `float \| None` | 否 | `None` | 新缩放比例，必须大于 `0.0`；`None` 表示不修改 |
 | `easetype` | `int \| None` | 否 | `None` | 新缓动类型，夹取到 0-18；`None` 表示不修改 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1424,6 +1553,10 @@ setCameraScale(chart: dict, index: int = -1,
 
 索引不存在、`scale <= 0.0` 或参数非法 时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -1435,7 +1568,7 @@ setCameraScale(chart: dict, index: int = -1,
 **函数声明**
 
 ```python
-deleteCameraScale(chart: dict, index: int = -1) -> dict | None
+deleteCameraScale(chart: dict, index: int = -1, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1444,6 +1577,7 @@ deleteCameraScale(chart: dict, index: int = -1) -> dict | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1460,6 +1594,10 @@ deleteCameraScale(chart: dict, index: int = -1) -> dict | None
 成功返回被删除或被重置前的原节点的规格 Dict。
 
 索引不存在或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1479,7 +1617,8 @@ addLine(chart: dict, linepointslist: list,
         index: int | None = None,
         isDelayCalculate: bool = False,
         *, notes: list | None = None,
-        linecolors: list | None = None) -> int | None
+        linecolors: list | None = None,
+        isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -1493,6 +1632,7 @@ addLine(chart: dict, linepointslist: list,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `notes` | `list \| None` | 否 | `None` | Note 列表；省略或空列表表示不加 Note |
 | `linecolors` | `list \| None` | 否 | `None` | `lineColor` 节点列表；省略或空列表表示不加线色 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1540,6 +1680,10 @@ addLine(chart: dict, linepointslist: list,
 **返回值**
 
 成功返回新线的索引；失败返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1616,7 +1760,7 @@ addLine(
 **函数声明**
 
 ```python
-deleteLine(chart: dict, index: int = -1) -> dict | None
+deleteLine(chart: dict, index: int = -1, *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1625,6 +1769,7 @@ deleteLine(chart: dict, index: int = -1) -> dict | None
 | --- | --- | --- | --- | --- |
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `index` | `int` | 否 | `-1` | 线索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1633,6 +1778,10 @@ deleteLine(chart: dict, index: int = -1) -> dict | None
 **返回值**
 
 成功返回被删除引导线的规格 Dict；谱面、`lines` 或索引非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1661,7 +1810,8 @@ createLinePoint(time: float, xPosition: float,
                 index: int, easetype: int,
                 color: str | list,
                 isRealTime: bool = False,
-                chart: dict | None = None) -> dict | None
+                chart: dict | None = None,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1675,6 +1825,7 @@ createLinePoint(time: float, xPosition: float,
 | `color` | `str \| list` | 是 | - | 节点颜色，支持 HEX / RGB / RGBA |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `chart` | `dict \| None` | 否 | `None` | 参照谱面；仅 `isRealTime=True` 时使用 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1716,6 +1867,10 @@ createLinePoint(time: float, xPosition: float,
 ```
 
 参数或谱面非法时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1760,7 +1915,8 @@ addLinePoint(chart: dict, time: float, xPosition: float,
              lineindex: int = -1,
              isDelayCalculate: bool = False,
              isRealTime: bool = False,
-             isAbsolutePosition: bool = False) -> int | None
+             isAbsolutePosition: bool = False,
+             *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -1777,6 +1933,7 @@ addLinePoint(chart: dict, time: float, xPosition: float,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `isAbsolutePosition` | `bool` | 否 | `False` | `True` 时 `xPosition` 是绝对 x 坐标 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1801,6 +1958,10 @@ addLinePoint(chart: dict, time: float, xPosition: float,
 **返回值**
 
 成功返回插入后的线节点索引；画布 x 无法计算、参数或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1835,7 +1996,8 @@ setLinePoint(chart: dict, lineindex: int = -1,
              easetype: int | None = None,
              color: str | list | None = None,
              isDelayCalculate: bool = False,
-             isRealTime: bool = False) -> dict | None
+             isRealTime: bool = False,
+             *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1852,6 +2014,7 @@ setLinePoint(chart: dict, lineindex: int = -1,
 | `color` | `str \| list \| None` | 否 | `None` | 新颜色；`None` 表示不修改 |
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1875,6 +2038,10 @@ setLinePoint(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -1897,7 +2064,8 @@ print(old)  # 修改前的节点
 
 ```python
 deleteLinePoint(chart: dict, lineindex: int = -1,
-                pointindex: int = -1) -> dict | None
+                pointindex: int = -1,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1907,6 +2075,7 @@ deleteLinePoint(chart: dict, lineindex: int = -1,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `lineindex` | `int` | 否 | `-1` | 线索引，0 起，负数从末尾计算 |
 | `pointindex` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1919,6 +2088,10 @@ deleteLinePoint(chart: dict, lineindex: int = -1,
 **当该线只有两个或更少节点时不能删除**， 返回 `None`。
 
 索引不存在或结构非法时同样返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -1946,7 +2119,8 @@ if removed is None:
 createRingPoint(time: float, startcolor: str | list,
                 endcolor: str | list | None = None,
                 isRealTime: bool = False,
-                chart: dict | None = None) -> dict | None
+                chart: dict | None = None,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -1958,6 +2132,7 @@ createRingPoint(time: float, startcolor: str | list,
 | `endcolor` | `str \| list \| None` | 否 | `None` | 结束颜色；`None` 表示与起始颜色相同 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `chart` | `dict \| None` | 否 | `None` | 参照谱面；**仅 `isRealTime=True` 时使用** |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -1985,6 +2160,10 @@ createRingPoint(time: float, startcolor: str | list,
 **返回值**
 
 成功返回判定环规格 Dict；参数或谱面非法时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2015,7 +2194,8 @@ ring = createRingPoint(2.4, "#FFFFFF", isRealTime=True, chart=chart)
 addRingPoint(chart: dict, index: int, time: float,
              startcolor: str | list,
              endcolor: str | list | None = None,
-             isRealTime: bool = False) -> int | None
+             isRealTime: bool = False,
+             *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -2028,6 +2208,7 @@ addRingPoint(chart: dict, index: int, time: float,
 | `startcolor` | `str \| list` | 是 | - | 起始颜色 |
 | `endcolor` | `str \| list \| None` | 否 | `None` | 结束颜色；`None` 表示与 `startcolor` 相同 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2046,6 +2227,10 @@ addRingPoint(chart: dict, index: int, time: float,
 **返回值**
 
 成功返回插入后的判定环索引；线索引、时间、颜色或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2070,7 +2255,8 @@ setRingPoint(chart: dict, lineindex: int = -1,
              ringindex: int = -1, time: float | None = None,
              startcolor: str | list | None = None,
              endcolor: str | list | None = None,
-             isRealTime: bool = False) -> dict | None
+             isRealTime: bool = False,
+             *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2084,6 +2270,7 @@ setRingPoint(chart: dict, lineindex: int = -1,
 | `startcolor` | `str \| list \| None` | 否 | `None` | 新起始颜色；`None` 表示不修改 |
 | `endcolor` | `str \| list \| None` | 否 | `None` | 新结束颜色；`None` 表示**不修改** |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2107,6 +2294,10 @@ setRingPoint(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`1/10`
@@ -2129,7 +2320,8 @@ if old is None:
 
 ```python
 deleteRingPoint(chart: dict, lineindex: int = -1,
-                ringindex: int = -1) -> dict | None
+                ringindex: int = -1,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2139,6 +2331,7 @@ deleteRingPoint(chart: dict, lineindex: int = -1,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `lineindex` | `int` | 否 | `-1` | 线索引，0 起，负数从末尾计算 |
 | `ringindex` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2151,6 +2344,10 @@ deleteRingPoint(chart: dict, lineindex: int = -1,
 **该线只剩一个判定环节点时不能删除**，返回 `None`。
 
 索引不存在或结构 非法时同样返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2178,7 +2375,8 @@ if removed is None:
 createLineColor(time: float, startcolor: str | list,
                 endcolor: str | list | None = None,
                 isRealTime: bool = False,
-                chart: dict | None = None) -> dict | None
+                chart: dict | None = None,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2190,6 +2388,7 @@ createLineColor(time: float, startcolor: str | list,
 | `endcolor` | `str \| list \| None` | 否 | `None` | 结束颜色；`None` 表示与 `startcolor` 相同 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `chart` | `dict \| None` | 否 | `None` | 参照谱面；仅 `isRealTime=True` 时使用 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2218,6 +2417,10 @@ createLineColor(time: float, startcolor: str | list,
 ```
 
 时间、 颜色或谱面非法时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2248,7 +2451,8 @@ color = createLineColor(
 addLineColor(chart: dict, index: int, time: float,
              startcolor: str | list,
              endcolor: str | list | None = None,
-             isRealTime: bool = False) -> int | None
+             isRealTime: bool = False,
+             *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -2261,6 +2465,7 @@ addLineColor(chart: dict, index: int, time: float,
 | `startcolor` | `str \| list` | 是 | - | 起始颜色 |
 | `endcolor` | `str \| list \| None` | 否 | `None` | 结束颜色；`None` 表示与 `startcolor` 相同 |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2281,6 +2486,10 @@ addLineColor(chart: dict, index: int, time: float,
 **返回值**
 
 成功返回插入后的线色索引；线索引、时间、颜色或结构非法时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2305,7 +2514,8 @@ setLineColor(chart: dict, lineindex: int = -1,
              colorindex: int = -1, time: float | None = None,
              startcolor: str | list | None = None,
              endcolor: str | list | None = None,
-             isRealTime: bool = False) -> dict | None
+             isRealTime: bool = False,
+             *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2319,6 +2529,7 @@ setLineColor(chart: dict, lineindex: int = -1,
 | `startcolor` | `str \| list \| None` | 否 | `None` | 新起始颜色；`None` 表示不修改 |
 | `endcolor` | `str \| list \| None` | 否 | `None` | 新结束颜色；`None` 表示**不修改** |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2342,6 +2553,10 @@ setLineColor(chart: dict, lineindex: int = -1,
 
 索引不存在、参数非法或无法重排时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`1/10`
@@ -2364,7 +2579,8 @@ if old is None:
 
 ```python
 deleteLineColor(chart: dict, lineindex: int = -1,
-                colorindex: int = -1) -> dict | None
+                colorindex: int = -1,
+                *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2374,6 +2590,7 @@ deleteLineColor(chart: dict, lineindex: int = -1,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `lineindex` | `int` | 否 | `-1` | 线索引，0 起，负数从末尾计算 |
 | `colorindex` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2388,6 +2605,10 @@ deleteLineColor(chart: dict, lineindex: int = -1,
 删除指定线色覆盖节点并返回原节点的规格 Dict。
 
 `lineColor` 为空、索引不存在或结构非法时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2416,7 +2637,8 @@ createNote(time: float, type: int | str,
            endtime: float = 0.0,
            isRealTime: bool = False,
            isRealEndTime: bool = False,
-           chart: dict | None = None) -> dict | None
+           chart: dict | None = None,
+           *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2429,6 +2651,7 @@ createNote(time: float, type: int | str,
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `isRealEndTime` | `bool` | 否 | `False` | `True` 时 `endtime` 是实际秒数 |
 | `chart` | `dict \| None` | 否 | `None` | 参照谱面；仅 `isRealTime` / `isRealEndTime` 为 `True` 时使用 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2473,6 +2696,10 @@ createNote(time: float, type: int | str,
 
 参数或谱面非法时返回 `None`。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`0/10`
@@ -2503,7 +2730,8 @@ addNote(chart: dict, index: int, time: float,
         type: int | str, endtime: float = 0.0,
         isDelayCalculate: bool = False,
         isRealTime: bool = False,
-        isRealEndTime: bool = False) -> int | None
+        isRealEndTime: bool = False,
+        *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -2518,6 +2746,7 @@ addNote(chart: dict, index: int, time: float,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `isRealEndTime` | `bool` | 否 | `False` | `True` 时 `endtime` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2560,6 +2789,10 @@ t == p_j.time             → p_{j-1}.canvasIndex（左侧节点/前一段）
 
 成功返回插入后的 Note 索引；参数、时间范围、类型、画布或结构非法时返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -2595,7 +2828,8 @@ setNote(chart: dict, lineindex: int = -1,
         endtime: float | None = None,
         isDelayCalculate: bool = False,
         isRealTime: bool = False,
-        isRealEndTime: bool = False) -> dict | None
+        isRealEndTime: bool = False,
+        *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2611,6 +2845,7 @@ setNote(chart: dict, lineindex: int = -1,
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isRealTime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `isRealEndTime` | `bool` | 否 | `False` | `True` 时 `endtime` 是实际秒数 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2640,6 +2875,10 @@ setNote(chart: dict, lineindex: int = -1,
 
 失败返回 `None`，且不修改谱面。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`2/10`
@@ -2664,7 +2903,8 @@ old = setNote(chart, 0, 0, type="drag", time=3.0)
 
 ```python
 deleteNote(chart: dict, lineindex: int = -1,
-           noteindex: int = -1) -> dict | None
+           noteindex: int = -1,
+           *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2674,6 +2914,7 @@ deleteNote(chart: dict, lineindex: int = -1,
 | `chart` | `dict` | 是 | - | 谱面 dict |
 | `lineindex` | `int` | 否 | `-1` | 线索引，0 起，负数从末尾计算 |
 | `noteindex` | `int` | 否 | `-1` | Note 索引，0 起，负数从末尾计算 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2688,6 +2929,10 @@ deleteNote(chart: dict, lineindex: int = -1,
 删除指定 Note 并返回原 Note 的规格 Dict。
 
 `notes` 为空、索引不存在或结构非法时返回 `None`。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartStructureError`；可能异常：`RizChartStructureError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartBpmError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2715,7 +2960,8 @@ if removed is None:
 addBpmShift(chart: dict, value: float, time: float,
             isDelayCalculate: bool = False,
             isRealtime: bool = False, isFixedTime: bool = False,
-            isMultiply: bool = False) -> int | None
+            isMultiply: bool = False,
+            *, isReturnException: bool = False) -> int | None
 ```
 
 **参数**
@@ -2729,6 +2975,7 @@ addBpmShift(chart: dict, value: float, time: float,
 | `isRealtime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数，否则是 tick |
 | `isFixedTime` | `bool` | 否 | `False` | 是否保持后续节点的绝对时间不变 |
 | `isMultiply` | `bool` | 否 | `False` | `True` 时 `value` 是倍率，否则是实际 BPM |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2762,6 +3009,10 @@ addBpmShift(chart: dict, value: float, time: float,
 
 成功返回插入后的 BPM 节点索引；参数、结构或时间轴不合法时返回 `None`，且不修改谱面。相同时间的节点会插入到已有节点之后。
 
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartBpmError`；可能异常：`RizChartBpmError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
 **性能**
 
 - 相对开销：`7/10`
@@ -2794,7 +3045,8 @@ setBpmShift(chart: dict, index: int = -1, value: float | None = None,
             time: float | None = None,
             isDelayCalculate: bool = False,
             isRealtime: bool = False,
-            isFixedTime: bool = False, isMultiply: bool = False) -> dict | None
+            isFixedTime: bool = False, isMultiply: bool = False,
+            *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2809,6 +3061,7 @@ setBpmShift(chart: dict, index: int = -1, value: float | None = None,
 | `isRealtime` | `bool` | 否 | `False` | `True` 时 `time` 是实际秒数 |
 | `isFixedTime` | `bool` | 否 | `False` | 是否保持修改点之后节点的绝对时间不变 |
 | `isMultiply` | `bool` | 否 | `False` | `True` 时 `value` 是倍率，否则是实际 BPM |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2833,6 +3086,10 @@ setBpmShift(chart: dict, index: int = -1, value: float | None = None,
 **返回值**
 
 成功返回修改前的原节点的规格 Dict；参数、结构或时间冲突导致失败时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartBpmError`；可能异常：`RizChartBpmError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
@@ -2863,7 +3120,8 @@ print(old)  # 修改前的节点规格 Dict
 ```python
 deleteBpmShift(chart: dict, index: int = -1,
                isDelayCalculate: bool = False,
-               isFixedTime: bool = False) -> dict | None
+               isFixedTime: bool = False,
+               *, isReturnException: bool = False) -> dict | None
 ```
 
 **参数**
@@ -2874,6 +3132,7 @@ deleteBpmShift(chart: dict, index: int = -1,
 | `index` | `int` | 否 | `-1` | 节点索引，0 起，负数从末尾计算 |
 | `isDelayCalculate` | `bool` | 否 | `False` | 为 `True` 时跳过 `floorPosition` 计算/全谱重算，需随后调用 `refresh()` |
 | `isFixedTime` | `bool` | 否 | `False` | 是否保持删除点之后节点的绝对时间不变 |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值；批量函数会忽略 `isFailAddAllowed` 并强制原子回退。 |
 
 **用途**
 
@@ -2896,6 +3155,10 @@ deleteBpmShift(chart: dict, index: int = -1,
 成功返回被删除/被重置前的原节点的规格 Dict。
 
 索引不存在、结构非法或无法删除 时返回 `None`，且不修改谱面。
+
+**异常**
+
+`isReturnException=True` 时，上述失败不返回失败值，而是抛出 `RizChartError` 子类。默认异常为 `RizChartBpmError`；可能异常：`RizChartBpmError`, `RizChartTypeError`, `RizChartIndexError`, `RizChartStructureError`, `RizChartReferenceError`, `RizChartTimeError`, `RizChartCanvasError`, `RizChartEaseError`, `RizChartColorError`, `RizChartFloorPositionError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
 
 **性能**
 
