@@ -12,11 +12,12 @@
 | [base.md](base.md) | `new()` / `load()` / `export()` / `check()` / `refresh()` |
 | [chart.md](chart.md) | 颜色、主题、画布、摄像机、引导线、Note、BPM 的创建与修改 |
 | [query.md](query.md) | 元数据、对象、时间、颜色、几何与计算查询 |
-| [advanced.md](advanced.md) | 按规格 Dict 批量插入、跨谱面复制、批量缓动修改、颜色替换与绘图的组合函数 |
+| [advanced.md](advanced.md) | 按规格 Dict 批量插入、跨谱面复制、批量缓动修改、颜色替换、X 镜像与绘图的组合函数 |
 | [EXCEPTIONS.md](EXCEPTIONS.md) | `isReturnException`、自定义异常层次、错误码与批量异常说明 |
+| [NATIVE.md](NATIVE.md) | 可选 C++ 几何加速、构建要求、纯 Python 回退与 wheel 构建 |
 | [PERFORMANCE.md](PERFORMANCE.md) | 性能分数、复杂度符号和横向比较说明 |
 
-当前 157 个导出函数均有对应模块文档。所有可失败函数额外接受
+当前 159 个导出函数均有对应模块文档。所有可失败函数额外接受
 `isReturnException`，异常设计见 [EXCEPTIONS.md](EXCEPTIONS.md)。内部实现与维护说明见
 [TECHNICAL.md](TECHNICAL.md)。
 
@@ -31,14 +32,17 @@
 
 ## 安装与导入
 
-以下路径均相对于当前版本目录 `0.3.0/`（包含 `src/`、`docs/`、`tools/` 和
+以下路径均相对于当前版本目录 `0.4.0/`（包含 `src/`、`docs/`、`tools/` 和
 `pyproject.toml` 的目录）。包位于 `src/rizChartFunction`。
 
 ```powershell
-# 在 0.3.0/ 版本目录执行
+# 在 0.4.0/ 目录执行
 $env:PYTHONPATH = "src"
 python
 ```
+
+安装时默认尝试构建可选 C++ 扩展；没有 C++ 编译器时可以设置
+`RIZCHART_BUILD_NATIVE=OFF` 使用纯 Python。详细说明见 [NATIVE.md](NATIVE.md)。
 
 ```python
 from rizChartFunction import (
@@ -132,6 +136,7 @@ print(line["linePoints"][0]["color"])  # [255, 255, 255, 255]
 | 视觉比例 | [`getXYRatio()`](query.md#getxyrratio) · [`getXYRatioByChart()`](query.md#getxyrratiobychart) |
 | 视觉边界 | [`getXBorder()`](query.md#getxborder) · [`getXBorderByChart()`](query.md#getxborderbychart) · [`getYBorder()`](query.md#getyborder) · [`getYBorderByChart()`](query.md#getyborderbychart) |
 | 游戏区域与线宽 | [`getGameScale()`](query.md#getgamescale) · [`getLineWidth()`](query.md#getlinewidth) |
+| 判定环半径 | [`getRingRadius()`](query.md#getringradius) |
 | 遮罩透明度 | [`getShadeOpacity()`](query.md#getshadeopacity) |
 
 ### advanced
@@ -147,6 +152,7 @@ print(line["linePoints"][0]["color"])  # [255, 255, 255, 255]
 | 画布 | [`addCanvasByDict()`](advanced.md#addcanvasbydict) · [`addCanvasPositionByDict()`](advanced.md#addcanvaspositionbydict) · [`addCanvasSpeedByDict()`](advanced.md#addcanvasspeedbydict) |
 | 摄像机 | [`addCameraPositionByDict()`](advanced.md#addcamerapositionbydict) · [`addCameraScaleByDict()`](advanced.md#addcamerascalebydict) |
 | 复制引导线 | [`copyLine()`](advanced.md#copyline) · [`copyLinePoint()`](advanced.md#copylinepoint) · [`copyRingPoint()`](advanced.md#copyringpoint) · [`copyNote()`](advanced.md#copynote) · [`copyLineColor()`](advanced.md#copylinecolor) |
+| 镜像引导线 | [`xMirrorLine()`](advanced.md#xmirrorline) |
 | 复制其它对象 | [`copyBpmShift()`](advanced.md#copybpmshift) · [`copyRiztime()`](advanced.md#copyriztime) · [`copyCanvas()`](advanced.md#copycanvas) · [`copyCanvasPosition()`](advanced.md#copycanvasposition) · [`copyCanvasSpeed()`](advanced.md#copycanvasspeed) · [`copyCamera()`](advanced.md#copycamera) · [`copyCameraPosition()`](advanced.md#copycameraposition) · [`copyCameraScale()`](advanced.md#copycamerascale) |
 | 颜色替换 | [`transColor()`](advanced.md#transcolor) |
 | 缓动 BPM / 流速 | [`setBpmShiftEase()`](advanced.md#setbpmshiftease) · [`setCanvasSpeedEase()`](advanced.md#setcanvasspeedease) |

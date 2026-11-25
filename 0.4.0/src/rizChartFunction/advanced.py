@@ -88,6 +88,7 @@ from .advanced_ease import (
 )
 from .advanced_draw import drawEllipse, drawPolygon, getClosedRegion
 from .advanced_font import drawText, drawThinText
+from .advanced_mirror import xMirrorLine
 
 __all__ = [
     "addLineByDict",
@@ -116,6 +117,7 @@ __all__ = [
     "copyCamera",
     "copyCameraPosition",
     "copyCameraScale",
+    "xMirrorLine",
     "transColor",
     "setBpmShiftEase",
     "setLinePointPositionEase",

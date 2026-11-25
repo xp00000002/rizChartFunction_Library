@@ -4,6 +4,12 @@
 实现路径和典型谱面规模做静态估算；实际耗时还会受 Python 版本、硬件、数据
 分布、对象数量和是否命中缓存影响。
 
+本版本还包含可选的 C++ 几何扩展。函数文档中的复杂度和相对开销默认按
+纯 Python 回退路径保守标注；安装 native 扩展后，多边形/椭圆填充和批量
+几何判断会使用 C++，但公开 API、输出和异常语义不变。构建与回退说明见
+[NATIVE.md](NATIVE.md)，实测结果见
+[`benchmarks/NATIVE_GEOMETRY_RESULTS.md`](../benchmarks/NATIVE_GEOMETRY_RESULTS.md)。
+
 ## 相对开销 0-10
 
 | 分数 | 含义 |

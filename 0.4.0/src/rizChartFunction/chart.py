@@ -2633,6 +2633,39 @@ def setLinePoint(
     if not isinstance(line, dict):
         return None
 
+    # Color-only edits do not affect floorPosition. Avoid validating and
+    # recomputing the whole line for every point in batch color operations.
+    if (
+        color is not None
+        and time is None
+        and xPosition is None
+        and canvasindex is None
+        and easetype is None
+    ):
+        raw_points = line.get("linePoints")
+        if not isinstance(raw_points, list):
+            return None
+        target_index = _resolve_existing_index(pointindex, len(raw_points))
+        if target_index is None:
+            return None
+        old_node = raw_points[target_index]
+        if not isinstance(old_node, dict):
+            return None
+        if not _validate_line_point(
+            old_node,
+            require_floor=not isDelayCalculate,
+        ):
+            return None
+        old_spec = _export_line_point(old_node)
+        if old_spec is None:
+            return None
+        new_color = _parse_color(color)
+        if new_color is None:
+            return None
+        if new_color != old_node["color"]:
+            old_node["color"] = new_color
+        return old_spec
+
     points = _line_points(line)
     if points is None:
         return None

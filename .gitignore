@@ -7,5 +7,19 @@ build/
 dist/
 *.egg-info/
 
+# Native extension build outputs.
+**/_skbuild/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/*.ninja
+**/install_manifest.txt
+**/*.pyd
+**/*.so
+**/*.dylib
+
 # Local generated examples; intentionally excluded from the repository.
 examples/
+
+# Local benchmark outputs and profiles.
+**/benchmarks/_output/

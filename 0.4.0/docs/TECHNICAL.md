@@ -19,8 +19,11 @@
 | `src/rizChartFunction/advanced_copy.py` | `copyXxx()` 的预演、规格转换与目标写入实现 |
 | `src/rizChartFunction/advanced_ease.py` | `setXxxEase()` 的索引解析、缓动采样、拆分/模拟、recursion/priority 每 tick 48 节点上限与事务提交 |
 | `src/rizChartFunction/advanced_draw.py` | `drawPolygon()` / `drawEllipse()` 的绘图实现（含填充孔洞遮罩），以及 `getClosedRegion()` 的线交图、闭合面提取与区域点重建 |
+| `src/rizChartFunction/advanced_mirror.py` | `xMirrorLine()` 的线/画布镜像、画布复制与事务回滚 |
 | `src/rizChartFunction/advanced_font.py` | `drawText()` / `drawThinText()` 的字体解析、字形 flatten、单行排版、边框、背景、填充与骨架提取 |
+| `src/rizChartFunction/_native.py` | 可选 native 扩展加载、坐标适配与纯 Python 回退 |
 | `src/rizChartFunction/__init__.py` | 统一导出公开函数 |
+| `cpp/src/rizchart_native.cpp` | 可选 C++17 几何内核；不直接操作谱面 dict |
 
 依赖方向：
 
@@ -36,18 +39,39 @@ advanced.py ──> advanced_draw.py （绘图函数）
 advanced.py ──> advanced_font.py （文字函数）
 advanced_font.py ──> advanced_draw.py / chart.py / query.py（公开 API）
 advanced_font.py ──> fontTools / shapely（可选字体与几何依赖）
+advanced_mirror.py ──> base.py / _internal.py（镜像、校验与事务回滚）
 advanced.py ──> base.py    （仅复用公开 refresh）
 advanced.py ──> chart.py   （仅复用公开 add/set/delete 函数）
 advanced.py ──> query.py   （复用公开查询函数与画布位置换算）
 advanced_copy.py ──> base.py / chart.py / query.py（仅公开 API）
 advanced_ease.py ──> base.py / chart.py / query.py（仅公开 API）
 advanced_draw.py ──> base.py / chart.py / query.py（仅公开 API）
+advanced_draw.py ──> _native.py（仅几何内核适配）
+_native.py ──> _rizchart_native（可选扩展；失败时延迟导入 advanced_draw）
 _internal.py ──> 标准库
 ```
 
 `_internal.py` 不依赖任何项目模块，因此不存在循环导入。
 `base.py` / `chart.py` / `query.py` 共享的底层逻辑必须放在 `_internal.py`，
 不要在多个模块中各自实现。
+
+### 1.1 可选 C++ 加速
+
+`advanced_draw.py` 通过 `_native.py` 调用可选扩展：
+
+- `is_simple_polygon()`
+- `line_intervals()`
+- `line_intervals_many()`
+- `point_in_polygon_many()`
+
+C++ 侧只接收坐标数组并返回数值，不持有谱面 dict，不创建公开对象，也不改变
+异常和事务语义。`advanced_draw.py` 的 `_is_simple_polygon()`、
+`_line_intervals()`、`_line_intervals_many()` 和
+`_point_in_polygon_with_boundary()` 在 native 调用失败时回退 Python 实现。
+
+`_native.py` 顶层只尝试导入扩展；纯 Python 回退函数按需延迟导入
+`advanced_draw`，避免模块加载阶段循环导入。构建配置在
+`pyproject.toml` / `CMakeLists.txt`，详细说明见 [NATIVE.md](NATIVE.md)。
 
 ---
 

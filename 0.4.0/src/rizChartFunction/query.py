@@ -87,6 +87,7 @@ __all__ = [
     "getYBorderByChart",
     "getGameScale",
     "getLineWidth",
+    "getRingRadius",
     "getShadeOpacity",
 ]
 
@@ -3300,6 +3301,15 @@ def getLineWidth(
     if not _is_finite_number(gamescale) or float(gamescale) <= 0.0:
         return None
     return 1.0 / (125.0 * float(gamescale))
+
+
+def getRingRadius() -> float:
+    """查询判定环半径，单位为 ``xPosition``。
+
+    返回固定值 ``1 / 18``。该函数没有失败路径，因此不提供
+    ``isReturnException``。
+    """
+    return 1.0 / 18.0
 
 
 _SHADE_THRESHOLDS = tuple(index / 511.0 for index in range(512))

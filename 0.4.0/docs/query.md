@@ -84,6 +84,8 @@
 - [游戏区域与线宽](#游戏区域与线宽)
   - [`getGameScale()`](#getgamescale)
   - [`getLineWidth()`](#getlinewidth)
+- [判定环半径](#判定环半径)
+  - [`getRingRadius()`](#getringradius)
 - [遮罩透明度](#遮罩透明度)
   - [`getShadeOpacity()`](#getshadeopacity)
 
@@ -3468,6 +3470,46 @@ from rizChartFunction import getLineWidth
 
 print(getLineWidth())    # 0.008
 print(getLineWidth(2))   # 0.004
+```
+
+## 判定环半径
+
+### `getRingRadius()`
+
+**函数声明**
+
+```python
+getRingRadius() -> float
+```
+
+**参数**
+
+无。
+
+**用途**
+
+查询判定环半径，单位为 `xPosition`。该值是固定的游戏视觉常量，不依赖谱面或当前画布。
+
+**返回值**
+
+始终返回 `float`，固定为 `1 / 18`，约 `0.05555555555555555`。
+
+**异常**
+
+无失败路径，因此不提供 `isReturnException`，也不会抛出异常。
+
+**性能**
+
+- 相对开销：`0/10`
+- 时间复杂度：`O(1)`；空间复杂度：`O(1)`
+- 大参数提示：无参数、无扫描，直接返回常量。
+
+**示例**
+
+```python
+from rizChartFunction import getRingRadius
+
+print(getRingRadius())  # 0.05555555555555555
 ```
 
 ## 遮罩透明度

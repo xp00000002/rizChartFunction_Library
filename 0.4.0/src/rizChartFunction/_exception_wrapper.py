@@ -36,7 +36,7 @@ from .exceptions import (
     RizChartValueError,
 )
 
-_NO_FAILURE = {"new", "rgb", "rgba"}
+_NO_FAILURE = {"new", "rgb", "rgba", "getRingRadius"}
 _BATCH_NAMES = {
     "addLineByDict",
     "addLinePointByDict",
@@ -118,6 +118,7 @@ _SPECIAL_DEFAULT = {
     "getClosedRegion": RizChartGeometryError,
     "drawPolygon": RizChartGeometryError,
     "drawEllipse": RizChartGeometryError,
+    "xMirrorLine": RizChartGeometryError,
     "drawText": RizChartDrawingError,
     "drawThinText": RizChartDrawingError,
 }

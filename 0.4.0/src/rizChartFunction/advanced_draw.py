@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from ._exception_wrapper import install_exception_api
+from . import _native
 
 import copy
 import math
 
+from ._internal import _parse_color
 from .base import refresh
 from .chart import (
+    _normalize_color_node,
     addLine,
     createLinePoint,
     createRingPoint,
@@ -194,6 +197,12 @@ def _segments_intersect(
 
 
 def _is_simple_polygon(polygon: list[dict]) -> bool:
+    if _native.available():
+        try:
+            return _native.is_simple_polygon(polygon)
+        except Exception:
+            pass
+
     count = len(polygon)
     if count < 3 or abs(_polygon_area(polygon)) <= _EPS:
         return False
@@ -245,6 +254,18 @@ def _point_in_polygon_with_boundary(
     point: dict,
     include_boundary: bool,
 ) -> bool:
+    if _native.available():
+        try:
+            return bool(
+                _native.point_in_polygon_many(
+                    polygon,
+                    [point],
+                    include_boundary,
+                )[0]
+            )
+        except Exception:
+            pass
+
     px = point["x"]
     py = point["y"]
     for index, start in enumerate(polygon):
@@ -601,6 +622,18 @@ def _line_intervals(
     start_t: float | None = None,
     end_t: float | None = None,
 ) -> list[tuple[float, float]]:
+    if _native.available():
+        try:
+            return _native.line_intervals(
+                polygon,
+                origin,
+                direction,
+                start_t,
+                end_t,
+            )
+        except Exception:
+            pass
+
     events = []
     for index, start in enumerate(polygon):
         end = polygon[(index + 1) % len(polygon)]
@@ -648,6 +681,37 @@ def _line_intervals(
         if _point_in_polygon(polygon, point):
             intervals.append((left, right))
     return intervals
+
+
+def _line_intervals_many(
+    polygon: list[dict],
+    origins: list[tuple[float, float]],
+    directions: list[tuple[float, float]],
+    start_ts: list[float] | None = None,
+    end_ts: list[float] | None = None,
+) -> list[list[tuple[float, float]]]:
+    if _native.available():
+        try:
+            return _native.line_intervals_many(
+                polygon,
+                origins,
+                directions,
+                start_ts,
+                end_ts,
+            )
+        except Exception:
+            pass
+
+    return [
+        _line_intervals(
+            polygon,
+            origin,
+            direction,
+            None if start_ts is None else start_ts[index],
+            None if end_ts is None else end_ts[index],
+        )
+        for index, (origin, direction) in enumerate(zip(origins, directions))
+    ]
 
 
 def _transparent_color(color: list[int]) -> list[int]:
@@ -735,13 +799,23 @@ def _make_point(
     x_position: float,
     color: list[int],
 ) -> dict | None:
-    return createLinePoint(
-        float(time),
-        float(x_position),
-        canvas_index,
-        0,
-        color,
-    )
+    if (
+        not _is_int(canvas_index)
+        or not _is_finite_number(time)
+        or time < 0
+        or not _is_finite_number(x_position)
+    ):
+        return None
+    parsed_color = _parse_color(color)
+    if parsed_color is None:
+        return None
+    return {
+        "time": float(time),
+        "xPosition": float(x_position),
+        "color": parsed_color,
+        "easeType": 0,
+        "canvasIndex": canvas_index,
+    }
 
 
 def _build_fill_linear(
@@ -764,25 +838,40 @@ def _build_fill_linear(
     if span <= _EPS:
         return []
 
-    lines = []
+    offsets = []
     offset = minimum
     while offset <= maximum + _EPS:
-        origin = (normal[0] * offset, normal[1] * offset)
-        intervals = _line_intervals(polygon, origin, direction)
-        if intervals:
-            ratio = (offset - minimum) / span
-            color = _gradient_color(stops, ratio)
-            points = _build_gapped_line(
-                canvas_index,
-                origin,
-                direction,
-                intervals,
-                lambda distance, color=color: color,
-            )
-            if points is None:
-                return None
-            lines.append(points)
+        offsets.append(offset)
         offset += precision
+    if not offsets:
+        return []
+
+    origins = [
+        (normal[0] * offset, normal[1] * offset)
+        for offset in offsets
+    ]
+    interval_groups = _line_intervals_many(
+        polygon,
+        origins,
+        [direction] * len(origins),
+    )
+
+    lines = []
+    for offset, origin, intervals in zip(offsets, origins, interval_groups):
+        if not intervals:
+            continue
+        ratio = (offset - minimum) / span
+        color = _gradient_color(stops, ratio)
+        points = _build_gapped_line(
+            canvas_index,
+            origin,
+            direction,
+            intervals,
+            lambda distance, color=color: color,
+        )
+        if points is None:
+            return None
+        lines.append(points)
     return lines
 
 
@@ -990,21 +1079,36 @@ def _build_fill_radial_conic(
             if boundary is not None:
                 boundaries.append(boundary)
 
-    lines = []
+    rays = []
     for boundary in boundaries:
         dx = boundary[0] - center[0]
         dy = boundary[1] - center[1]
         distance = math.hypot(dx, dy)
         if distance <= _EPS:
             continue
-        direction = (dx / distance, dy / distance)
-        intervals = _line_intervals(
-            polygon,
-            center,
-            direction,
-            start_t=0.0,
-            end_t=distance,
+        rays.append(
+            (
+                boundary,
+                distance,
+                (dx / distance, dy / distance),
+            )
         )
+    if not rays:
+        return []
+
+    interval_groups = _line_intervals_many(
+        polygon,
+        [center] * len(rays),
+        [ray[2] for ray in rays],
+        [0.0] * len(rays),
+        [ray[1] for ray in rays],
+    )
+
+    lines = []
+    for (boundary, distance, direction), intervals in zip(
+        rays,
+        interval_groups,
+    ):
         if not intervals:
             continue
 
@@ -1153,24 +1257,55 @@ def _build_border(
     return lines
 
 
+def _clone_color_node(node: dict) -> dict:
+    return {
+        "startColor": dict(node["startColor"]),
+        "endColor": dict(node["endColor"]),
+        "time": node["time"],
+    }
+
+
+def _append_lines(
+    chart: dict,
+    line_groups: list[list[dict]],
+    ring: dict,
+) -> list[int] | None:
+    """Append internally generated lines without re-validating every node.
+
+    The generated groups are already line-point specs. ``refresh()`` performs
+    the final ordering and floorPosition pass, so this path avoids the
+    per-line colour parsing and stable sort done by public ``addLine()``.
+    """
+    lines = chart.get("lines")
+    if not isinstance(lines, list):
+        return None
+    ring_node = _normalize_color_node(chart, ring)
+    if ring_node is None:
+        return None
+
+    created = []
+    for points in line_groups:
+        if not isinstance(points, list) or len(points) < 2:
+            _delete_created(chart, created)
+            return None
+        lines.append(
+            {
+                "linePoints": points,
+                "notes": [],
+                "judgeRingColor": [_clone_color_node(ring_node)],
+                "lineColor": [],
+            }
+        )
+        created.append(len(lines) - 1)
+    return created
+
+
 def _add_lines(
     chart: dict,
     line_groups: list[list[dict]],
     ring: dict,
 ) -> list[int] | None:
-    created = []
-    for points in line_groups:
-        index = addLine(
-            chart,
-            points,
-            ring,
-            isDelayCalculate=True,
-        )
-        if index is None:
-            _delete_created(chart, created)
-            return None
-        created.append(index)
-    return created
+    return _append_lines(chart, line_groups, ring)
 
 
 def _delete_created(chart: dict, indexes: list[int]) -> None:
@@ -1323,13 +1458,25 @@ def _make_point_ease(
     ease_type: int,
     color: list[int],
 ) -> dict | None:
-    return createLinePoint(
-        float(time),
-        float(x_position),
-        canvas_index,
-        ease_type,
-        color,
-    )
+    if (
+        not _is_int(canvas_index)
+        or not _is_int(ease_type)
+        or not 0 <= ease_type <= 18
+        or not _is_finite_number(time)
+        or time < 0
+        or not _is_finite_number(x_position)
+    ):
+        return None
+    parsed_color = _parse_color(color)
+    if parsed_color is None:
+        return None
+    return {
+        "time": float(time),
+        "xPosition": float(x_position),
+        "color": parsed_color,
+        "easeType": ease_type,
+        "canvasIndex": canvas_index,
+    }
 
 
 def _rotate_xy(x: float, y: float, angle: float) -> tuple[float, float]:
@@ -1892,21 +2039,38 @@ def _build_ellipse_conic_border_fill(
     precision: float,
 ) -> list[list[dict]] | None:
     boundaries = _boundary_samples(polygon, precision)
-    lines = []
+    rays = []
     for boundary in boundaries:
         dx = boundary[0] - center[0]
         dy = boundary[1] - center[1]
         distance = math.hypot(dx, dy)
         if distance <= _EPS:
             continue
-        direction = (dx / distance, dy / distance)
-        intervals = _line_intervals(
-            polygon,
-            center,
-            direction,
-            start_t=0.0,
-            end_t=distance,
+        rays.append(
+            (
+                boundary,
+                dx,
+                dy,
+                distance,
+                (dx / distance, dy / distance),
+            )
         )
+    if not rays:
+        return []
+
+    interval_groups = _line_intervals_many(
+        polygon,
+        [center] * len(rays),
+        [ray[4] for ray in rays],
+        [0.0] * len(rays),
+        [ray[3] for ray in rays],
+    )
+
+    lines = []
+    for (boundary, dx, dy, distance, direction), intervals in zip(
+        rays,
+        interval_groups,
+    ):
         if not intervals:
             continue
         angle_value = math.atan2(dx, dy) % (2.0 * math.pi)
@@ -3495,6 +3659,16 @@ def _mask_fill_line(
 ) -> list[dict] | None:
     if len(line) < 2:
         return line
+
+    def color_list(value: object) -> list[int]:
+        if isinstance(value, dict):
+            return [
+                value["r"],
+                value["g"],
+                value["b"],
+                value["a"],
+            ]
+        return list(value)
     points = list(line)
     if points[-1]["time"] < points[0]["time"]:
         points.reverse()
@@ -3516,8 +3690,8 @@ def _mask_fill_line(
         start_y = first["time"]
         end_x = second["xPosition"]
         end_y = second["time"]
-        first_color = first["color"]
-        second_color = second["color"]
+        first_color = color_list(first["color"])
+        second_color = color_list(second["color"])
         ranges = _hole_segment_ranges(first, second, holes)
         if not ranges:
             append_point(start_x, start_y, first_color)

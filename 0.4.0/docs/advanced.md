@@ -2,8 +2,10 @@
 
 [← 返回总览](README.md)
 
-`advanced.py` 提供按规格 Dict 批量插入、跨谱面复制对象、批量修改缓动和绘图的组合函数。所有函数只调用
-`base.py` / `chart.py` / `query.py` 暴露的公开函数，不直接修改谱面 dict。
+`advanced.py` 提供按规格 Dict 批量插入、跨谱面复制对象、批量修改缓动、
+镜像和绘图的组合函数。`advanced_mirror.py` / `advanced_draw.py` 等复杂
+实现会在内部构造或修改谱面结构，但通过完整校验和事务回滚保持公开 API
+的一致性。
 
 > 函数性能使用 `0-10` 相对开销标注，统一说明见 [PERFORMANCE.md](PERFORMANCE.md)。
 >
@@ -18,10 +20,12 @@
 - 时间参数默认是 tick；`isRealTime` / `isRealEndTime` 等为 `True` 时按 BPM
   时间轴换算为 tick。
 - 颜色参数支持 HEX / RGB(A) 列表；函数返回的规格中统一使用 RGBA 列表。
-- 返回值分三类：
+- 返回值分类：
   - 批量插入、复制、缓动函数：成功返回 `[]`，失败返回失败索引列表；整体输入
     非法通常返回 `[-1]`。具体规则以对应章节为准。
   - 绘图、文字函数：成功返回新建线索引列表，失败返回 `None`。
+  - `xMirrorLine()`：成功返回 `{"line": [...], "canvas": [...],
+    "canvaspositionpoint": [...]}`，失败返回 `None`。
   - 单个对象或查询类辅助函数：成功返回对象/数值，失败返回 `None`。
 
 ## 目录
@@ -55,6 +59,8 @@
   - [`copyCamera()`](#copycamera)
   - [`copyCameraPosition()`](#copycameraposition)
   - [`copyCameraScale()`](#copycamerascale)
+- [镜像函数](#镜像函数)
+  - [`xMirrorLine()`](#xmirrorline)
 - [颜色替换函数](#颜色替换函数)
   - [`transColor()`](#transcolor)
 - [缓动函数](#缓动函数)
@@ -1649,6 +1655,132 @@ copyCameraScale(sourcechart: dict, indexlist: int | list,
 - 时间复杂度：`O(V + C)`；空间复杂度：`O(V)`
 - 大参数提示：预演并复制摄像机缩放关键点。
 
+## 镜像函数
+
+### `xMirrorLine()`
+
+**函数声明**
+
+```python
+xMirrorLine(chart: dict, indexlist: int | list, axisposition: float,
+            mirrortype: str = "Line",
+            isAbsoluteAxisPosition: bool = True,
+            isDeleteOriginLine: bool = True,
+            *, isReturnException: bool = False) -> dict | None
+```
+
+**参数**
+
+| 参数 | 类型 | 必需 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `chart` | `dict` | 是 | - | 谱面 dict |
+| `indexlist` | `int \| list` | 是 | - | 线索引或索引列表；支持负数，重复索引保留 |
+| `axisposition` | `float` | 是 | - | X 对称轴坐标 |
+| `mirrortype` | `str` | 否 | `"Line"` | `"Line"` / `"changePartCanvas"` / `"changeCanvas"` / `"addCanvas"` |
+| `isAbsoluteAxisPosition` | `bool` | 否 | `True` | `axisposition` 是否按绝对 X 坐标解释；仅 `"Line"` 有效，其它模式强制按绝对坐标 |
+| `isDeleteOriginLine` | `bool` | 否 | `True` | 镜像后是否删除原线；`changePartCanvas` 强制为 `False` |
+| `isReturnException` | `bool` | 否 | `False` | `True` 时失败改为抛出异常，不再返回失败值 |
+
+**用途**
+
+以 `x = axisposition` 为对称轴镜像选中的引导线。新镜像线追加到
+`lines` 末尾；原线参数本身不修改，画布变化可能间接影响原线显示位置。
+
+`"changePartCanvas"` 会强制保留原线；其余模式按 `isDeleteOriginLine`
+决定是否删除原线。
+
+**镜像方式**
+
+`"Line"`：
+
+- 仅修改新线节点的相对 X 坐标。
+- 绝对轴：`Px' = 2Ax - 2Cx - Px`。
+- 相对轴：`Px' = 2Ax - Px`。
+- `Cx` 为节点时刻画布中线的绝对坐标。
+
+`"changePartCanvas"`：
+
+- 按选中线的画布连续段确定受影响的画布位置节点。
+- 对每段时间范围 `[a,b]`，取最后一个 `time <= a` 的节点和第一个
+  `time >= b` 的节点；没有后者时取最后一个可用节点。
+- 合并同一画布上的连续节点后，对每段 `S...E` 镜像画布位置，并在
+  S/E 处插入过渡节点。
+- `S == E` 时只执行 S 的流程。
+- 时间前后使用 `math.nextafter` 区分，不引入固定 delta；若 `S` 位于
+  `0`，原 S 保持在 `0`，镜像节点放到 `nextafter(0, +inf)`。
+- 选中线复制后只把线节点相对坐标改为 `-Px`。
+- 可能影响同一画布上的其它元素，这是该模式的设计行为。
+
+`"changeCanvas"`：
+
+- 找出选中线使用到的所有画布。
+- 对这些画布的全部位置节点执行 `Cx' = 2Ax - Cx`。
+- 选中线复制后线节点相对坐标改为 `-Px`。
+- 不新增画布。
+
+`"addCanvas"`：
+
+- 对每个受影响的旧画布复制一次，追加到 `canvasMoves` 末尾。
+- 新画布的位置节点使用镜像坐标，速度节点完整复制。
+- 选中线复制到对应新画布，线节点画布索引与 Hold 尾部画布索引一起重映射。
+- 原画布保持不变。
+
+**适用点与限制**
+
+| 模式 | 适用点 | 限制与注意 |
+| --- | --- | --- |
+| `"Line"` | 仅镜像选中的线，适合单画布线；不改变画布。 | 跨画布线可能出现线的运动方向不一致，因为每个节点使用各自时刻的画布中线坐标。 |
+| `"changePartCanvas"` | 镜像选中线，并同步镜像受影响的画布局部，保证选中线的视觉对称。 | 会改变受影响画布区间上的其它元素；多画布线会按使用画布的连续段拆分处理。本模式强制保留原线。 |
+| `"changeCanvas"` | 镜像选中线并镜像整个受影响画布，适合单独一个或多个画布上的线，例如先用 `copyLine()` 的 `add` 模式复制再镜像。 | 受影响画布上的所有元素都会一起变化，不只是选中的线。 |
+| `"addCanvas"` | 复制受影响画布和选中线，把镜像线迁移到新画布；适合跨画布镜像且不想影响其它线。 | 会增加画布数量；频繁使用可能导致谱面游玩时的性能问题。 |
+
+**返回值**
+
+成功返回：
+
+```python
+{
+    "line": [最终镜像线索引],
+    "canvas": [最终画布索引],
+    "canvaspositionpoint": [[画布索引, 节点索引], ...],
+}
+```
+
+- `"Line"`：`canvas` / `canvaspositionpoint` 为空。
+- `"changePartCanvas"`：`canvas` 为空，`canvaspositionpoint` 包含新增和修改过的画布位置节点。
+- `"changeCanvas"`：`canvas` 为被修改的画布，`canvaspositionpoint` 为空。
+- `"addCanvas"`：`canvas` 为新增画布，`canvaspositionpoint` 为空。
+- 空 `indexlist` 返回三个空列表；任一失败时不修改谱面。
+
+**异常**
+
+整体输入非法或操作失败时返回 `None`。`isReturnException=True` 时改为抛出
+异常，默认异常为 `RizChartGeometryError`；可能异常包括
+`RizChartGeometryError`, `RizChartValueError`, `RizChartTypeError`,
+`RizChartStructureError`。完整规则见 [EXCEPTIONS.md](EXCEPTIONS.md)。
+
+**性能**
+
+- 相对开销：`8/10`
+- 时间复杂度：`O(V + K + H)`；空间复杂度：`O(V)`
+- 大参数提示：会深复制谱面用于失败回滚，并复制选中线；`K` 为受影响的
+  画布位置节点数，`H` 为 Hold 尾部引用数。`addCanvas` 还会复制完整画布。
+
+**示例**
+
+```python
+from rizChartFunction import xMirrorLine
+
+result = xMirrorLine(
+    chart,
+    [0, 2],
+    0.0,
+    mirrortype="changePartCanvas",
+)
+print(result["line"])
+print(result["canvaspositionpoint"])
+```
+
 ## 颜色替换函数
 
 ### `transColor()`
@@ -1741,10 +1873,10 @@ origioncolorlist[1] -> targetcolorlist[1]
 
 **性能**
 
-- 相对开销：`4/10`
+- 相对开销：`2/10`
 - 时间复杂度：`O(V + T)`；空间复杂度：`O(V + T)`
 - 大参数提示：V 为需要扫描的线节点/颜色节点数，T 为需要检查的主题数；
-  会先收集全部改动再统一写入。
+  会先收集全部改动再统一写入。仅修改节点颜色时不会重算 `floorPosition`。
 
 **示例**
 
@@ -2032,9 +2164,9 @@ setLinePointColorByList(chart: dict, lineindex: int,
 
 **性能**
 
-- 相对开销：`3/10`
+- 相对开销：`1/10`
 - 时间复杂度：`O(n)`；空间复杂度：`O(n)`
-- 大参数提示：n 为区间内已有节点数；区间越长越慢，不插节点。
+- 大参数提示：n 为区间内已有节点数；区间越长越慢，不插节点。仅修改颜色，不触发 `floorPosition` 重算。
 
 ### `setRingColorEase()`
 
@@ -2607,6 +2739,7 @@ drawPolygon(chart: dict, canvasindex: int, pointlist: list,
 - 相对开销：`8/10`
 - 时间复杂度：`O(F * P)`；空间复杂度：`O(F * P)`
 - 大参数提示：F 随 precision 变小而增大；线性填充按扫描线裁剪，径向/锥形按射线裁剪。`isFillGraph=False` 可跳过全部填充，`isDrawBorder=False` 可跳过边框层。
+- 可选 native 扩展会批量处理填充射线和内部建线；未安装扩展时自动使用纯 Python 回退。上述复杂度按回退路径估算，构建说明见 [NATIVE.md](NATIVE.md)。
 
 **注意事项**
 
@@ -2731,6 +2864,7 @@ drawEllipse(chart: dict, canvasindex: int, centerpoint: dict,
 - 相对开销：`8/10`
 - 时间复杂度：`O(F * P)`；空间复杂度：`O(F * P)`
 - 大参数提示：F 为填充线/边框节点数；非 90° 边框和更小 lineprecision 更慢。90° 分支只生成四条曲线，通常比非 90° 分支轻；关闭填充或边框可减少工作量。
+- 可选 native 扩展会批量处理填充射线和内部建线；未安装扩展时自动使用纯 Python 回退。上述复杂度按回退路径估算，构建说明见 [NATIVE.md](NATIVE.md)。
 
 **注意事项**
 
