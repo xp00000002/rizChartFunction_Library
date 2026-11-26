@@ -221,3 +221,7 @@ GitHub；如需保留，请放在本地任意位置，或在本地仓库中使�
 - [0.3.0 文档总览](0.3.0/docs/README.md)
 - [0.2.0 文档总览](0.2.0/docs/README.md)
 - [0.1.0 文档总览](0.1.0/docs/README.md)
+
+## 许可证
+
+本项目使用 [MIT License](LICENSE) 开源。

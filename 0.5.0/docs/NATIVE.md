@@ -83,7 +83,7 @@ print(_native.native_error())
 | 项目 | 要求 |
 | --- | --- |
 | Python | `>=3.10` |
-| setuptools | `>=68` |
+| setuptools | `>=77` |
 | wheel | 任意兼容版本 |
 | pybind11 | `>=2.12` |
 | C++（仅 native） | C++17 |

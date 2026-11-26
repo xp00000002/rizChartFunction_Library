@@ -85,7 +85,7 @@ from rizChartFunction import createLinePoint, createRingPoint, createNote
 - Python：`>=3.10`
 - 运行时核心：Python 标准库
 - 可选字体依赖：`fontTools`、`shapely`、`numpy`、`Pillow`、`scikit-image`
-- 构建后端：`setuptools>=68`、`wheel`、`pybind11>=2.12`
+- 构建后端：`setuptools>=77`、`wheel`、`pybind11>=2.12`
 - 可选 native 构建：C++17 编译器（Windows 使用 MSVC，Linux 使用 GCC/Clang，
   macOS 使用 Xcode Command Line Tools）
 - 关闭 native 时：纯 Python 安装不需要 C++ 编译器、CMake 或 Ninja
@@ -194,3 +194,7 @@ python tools/smoke_test.py
 python tools/smoke_test.py --expect-native
 python tools/smoke_test.py --expect-fallback
 ```
+
+## 许可证
+
+本项目使用 [MIT License](LICENSE) 开源。
