@@ -56,15 +56,18 @@ jobs:
           - "3.13"
     env:
       RIZCHART_BUILD_NATIVE: "OFF"
-      SKBUILD_WHEEL_PLATLIB: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Build and verify pure Python wheel
+        run: |
+          python -m pip install --upgrade pip wheel
+          python -m pip wheel ./0.4.0 --no-deps -w wheelhouse
+          python -c "from pathlib import Path; names=[p.name for p in Path('wheelhouse').glob('*.whl')]; assert names, names; assert all('py3-none-any' in name for name in names), names"
       - name: Install pure Python build
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install ./0.4.0
+          python -m pip install --no-index --find-links wheelhouse rizchartfunction
       - name: Verify fallback import and drawing
         run: python 0.4.0/tools/smoke_test.py --expect-fallback

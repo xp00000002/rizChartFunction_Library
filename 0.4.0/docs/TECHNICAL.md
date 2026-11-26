@@ -70,8 +70,10 @@ C++ 侧只接收坐标数组并返回数值，不持有谱面 dict，不创建�
 `_point_in_polygon_with_boundary()` 在 native 调用失败时回退 Python 实现。
 
 `_native.py` 顶层只尝试导入扩展；纯 Python 回退函数按需延迟导入
-`advanced_draw`，避免模块加载阶段循环导入。构建配置在
-`pyproject.toml` / `CMakeLists.txt`，详细说明见 [NATIVE.md](NATIVE.md)。
+`advanced_draw`，避免模块加载阶段循环导入。构建由 `pyproject.toml` 与
+`setup.py` 的 setuptools 后端处理：`RIZCHART_BUILD_NATIVE=OFF` 时完全跳过
+C++ 扩展，不需要 CMake、Ninja 或 C++ 编译器。`CMakeLists.txt` 仅保留为手动
+构建入口；详细说明见 [NATIVE.md](NATIVE.md)。
 
 ---
 

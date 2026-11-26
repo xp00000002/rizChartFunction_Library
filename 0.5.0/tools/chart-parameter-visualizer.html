@@ -1,0 +1,2163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rizline 参数示意图工具</title>
+<style>
+:root {
+  --bg: #f4f6fa;
+  --panel: #ffffff;
+  --ink: #1f2937;
+  --muted: #667085;
+  --line: #d8dee9;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --red: #dc2626;
+  --green: #059669;
+  --shadow: 0 8px 28px rgba(15, 23, 42, .08);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+header {
+  padding: 24px 28px 16px;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc 55%, #f5f3ff);
+  border-bottom: 1px solid var(--line);
+}
+h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .01em; }
+header p { margin: 0; color: var(--muted); }
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px 28px 0;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.tab {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 9px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+}
+.tab:hover { border-color: #9db7e8; }
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px 28px 40px;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+.workspace {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.controls, .viewer {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.controls { padding: 16px; }
+.controls h2 { margin: 0 0 4px; font-size: 16px; }
+.controls .lead { margin: 0 0 14px; color: var(--muted); font-size: 12.5px; }
+.field { display: block; margin: 0 0 11px; }
+.field > span { display: block; margin-bottom: 5px; color: #344054; font-size: 12.5px; }
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 11px;
+}
+.field-grid .field { margin: 0; }
+input[type=number], input[type=text], select, textarea, input[type=file] {
+  width: 100%;
+  border: 1px solid #cfd7e5;
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+input[type=file] { padding: 5px 7px; }
+textarea { resize: vertical; min-height: 116px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+input:disabled, select:disabled {
+  background: #f3f5f9;
+  color: #98a2b3;
+}
+.hint {
+  margin: -2px 0 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px dashed #d5deea;
+  color: var(--muted);
+  font-size: 12px;
+}
+.actions { display: flex; gap: 8px; align-items: center; }
+button.primary, button.ghost {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 13px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+button.primary { background: var(--accent); color: #fff; }
+button.primary:hover { filter: brightness(.95); }
+button.ghost { background: #fff; color: var(--accent); }
+button.ghost:hover { background: var(--accent-soft); }
+.viewer { overflow: hidden; }
+.canvas-wrap {
+  position: relative;
+  height: 560px;
+  background: #fbfcff;
+  border-bottom: 1px solid var(--line);
+}
+.canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+.stats {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  min-height: 36px;
+}
+.stats.error { color: var(--red); background: #fef2f2; }
+.output-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px 7px;
+  color: #344054;
+  font-size: 12.5px;
+}
+.output-head .name { font-weight: 600; }
+pre.output {
+  margin: 0;
+  padding: 0 14px 15px;
+  max-height: 230px;
+  overflow: auto;
+  color: #334155;
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre;
+}
+.hidden { display: none !important; }
+.badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11.5px;
+  pointer-events: none;
+}
+.small { color: var(--muted); font-size: 11.5px; }
+@media (max-width: 980px) {
+  .workspace { grid-template-columns: 1fr; }
+  .canvas-wrap { height: 460px; }
+  .tabs { padding-left: 16px; padding-right: 16px; }
+  main { padding-left: 16px; padding-right: 16px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Rizline 参数示意图工具</h1>
+  <p>单文件离线工具 · 直接用浏览器打开 · 用于观察不同参数下的插点/填充线/细字骨架</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-panel="ease">1. 缓动插点</button>
+  <button class="tab" data-panel="fill">2. 填充线</button>
+  <button class="tab" data-panel="text">3. 细字骨架</button>
+</div>
+
+<main>
+  <!-- ==================== Ease ==================== -->
+  <section class="panel active" id="panel-ease">
+    <div class="workspace">
+      <aside class="controls">
+        <h2>缓动插点</h2>
+        <p class="lead">可切换二维直线插点与 linePoint 缓动：后者 X 按缓动、Y 为线性时间。</p>
+
+        <div class="field-grid">
+          <label class="field"><span>起点 X</span><input id="ease-x0" type="number" value="0" step="0.1"></label>
+          <label class="field"><span>起点 Y</span><input id="ease-y0" type="number" value="0" step="0.1"></label>
+          <label class="field"><span>终点 X</span><input id="ease-x1" type="number" value="0.4" step="0.01"></label>
+          <label class="field"><span>终点 Y</span><input id="ease-y1" type="number" value="0.3" step="0.01"></label>
+        </div>
+
+        <label class="field">
+          <span>缓动类型</span>
+          <select id="ease-type"></select>
+        </label>
+        <div id="ease-bezier" class="field-grid hidden">
+          <label class="field"><span>x1</span><input id="ease-bx1" type="number" value="0.42" step="0.01"></label>
+          <label class="field"><span>y1</span><input id="ease-by1" type="number" value="0" step="0.01"></label>
+          <label class="field"><span>x2</span><input id="ease-bx2" type="number" value="0.58" step="0.01"></label>
+          <label class="field"><span>y2</span><input id="ease-by2" type="number" value="1" step="0.01"></label>
+        </div>
+
+        <label class="field">
+          <span>显示内容</span>
+          <select id="ease-view">
+            <option value="both" selected>两者都显示</option>
+            <option value="direct">二维直线插点</option>
+            <option value="line">线节点缓动（time/X）</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>插入策略</span>
+          <select id="ease-strategy">
+            <option value="uniform">uniform · 均匀参数</option>
+            <option value="arc">arc · 等弧长</option>
+            <option value="curvature">curvature · 曲率加权</option>
+            <option value="recursion">recursion · 递归误差</option>
+            <option value="priority">priority · 优先误差</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>precision</span>
+          <input id="ease-precision" type="number" value="3" step="1" min="1">
+        </label>
+        <div class="hint" id="ease-hint">节点数量</div>
+
+        <div class="actions">
+          <button class="primary" id="ease-render">重新计算</button>
+          <button class="ghost" id="ease-copy">复制坐标</button>
+        </div>
+      </aside>
+
+      <section class="viewer">
+        <div class="canvas-wrap">
+          <canvas id="ease-canvas"></canvas>
+          <div class="badge" id="ease-badge">蓝：二维插点　橙线：节点连线　淡橙虚线：目标曲线</div>
+        </div>
+        <div class="stats" id="ease-stats"></div>
+        <div class="output-head"><span class="name">插入点坐标</span><span class="small">JSON</span></div>
+        <pre class="output" id="ease-output"></pre>
+      </section>
+    </div>
+  </section>
+
+  <!-- ==================== Fill ==================== -->
+  <section class="panel" id="panel-fill">
+    <div class="workspace">
+      <aside class="controls">
+        <h2>填充线</h2>
+        <p class="lead">多边形为坐标点列表。中心与角度按填充方式启用，输出每条填充线的两个端点。</p>
+
+        <label class="field">
+          <span>多边形点列表（每行 x,y）</span>
+          <textarea id="fill-points">0,0
+0.4,0
+0.4,0.3
+0,0.3</textarea>
+        </label>
+        <label class="field">
+          <span>预设图形</span>
+          <select id="fill-preset">
+            <option value="rect">矩形</option>
+            <option value="concave">凹形 L</option>
+            <option value="star">五角星</option>
+            <option value="custom">自定义</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>填充方式</span>
+          <select id="fill-style">
+            <option value="linear">linear · 平行线</option>
+            <option value="radial">radial · 径向射线</option>
+            <option value="conic">conic · 锥形射线</option>
+            <option value="radialBorder">radialBorder · 边界径向</option>
+            <option value="conicBorder">conicBorder · 边界锥形</option>
+          </select>
+        </label>
+
+        <div class="field-grid">
+          <label class="field"><span>中心 X</span><input id="fill-cx" type="number" value="0.2" step="0.01"></label>
+          <label class="field"><span>中心 Y</span><input id="fill-cy" type="number" value="0.15" step="0.01"></label>
+        </div>
+        <label class="field"><span>角度（度）</span><input id="fill-angle" type="number" value="0" step="1"></label>
+        <label class="field"><span>precision</span><input id="fill-precision" type="number" value="0.025" step="0.005" min="0.0001"></label>
+        <div class="hint" id="fill-hint">平行线间距（坐标单位）</div>
+
+        <div class="actions">
+          <button class="primary" id="fill-render">重新计算</button>
+          <button class="ghost" id="fill-copy">复制坐标</button>
+        </div>
+      </aside>
+
+      <section class="viewer">
+        <div class="canvas-wrap">
+          <canvas id="fill-canvas"></canvas>
+          <div class="badge">蓝线：生成的填充线　绿点：中心</div>
+        </div>
+        <div class="stats" id="fill-stats"></div>
+        <div class="output-head"><span class="name">填充线端点</span><span class="small">[[[x1,y1],[x2,y2]], ...]</span></div>
+        <pre class="output" id="fill-output"></pre>
+      </section>
+    </div>
+  </section>
+
+  <!-- ==================== Thin text ==================== -->
+  <section class="panel" id="panel-text">
+    <div class="workspace">
+      <aside class="controls">
+        <h2>细字骨架</h2>
+        <p class="lead">在浏览器里栅格化文字并提取一像素骨架，再按 smoothness 简化。Y 倍率固定为 1.0。</p>
+
+        <label class="field"><span>字符串</span><input id="text-value" type="text" value="Rizline"></label>
+        <label class="field"><span>字体</span><input id="text-font" type="text" value="Microsoft YaHei" placeholder="只能填写一个字体名称"></label>
+        <label class="field">
+          <span>选择字体文件</span>
+          <input id="text-font-file" type="file" accept=".ttf,.otf,.woff,.woff2">
+        </label>
+        <div class="hint" id="text-font-status">当前：系统字体 Microsoft YaHei</div>
+        <div class="actions" style="margin-bottom: 12px;">
+          <button class="ghost" id="text-font-reset" type="button">恢复系统字体</button>
+        </div>
+        <div class="field-grid">
+          <label class="field">
+            <span>对齐</span>
+            <select id="text-align">
+              <option value="left">left</option>
+              <option value="center" selected>center</option>
+              <option value="right">right</option>
+            </select>
+          </label>
+          <label class="field"><span>字号</span><input id="text-size" type="number" value="0.2" step="0.01" min="0.01"></label>
+          <label class="field"><span>锚点 X</span><input id="text-x" type="number" value="0" step="1"></label>
+          <label class="field"><span>锚点 Y</span><input id="text-y" type="number" value="0" step="1"></label>
+          <label class="field"><span>字距（em）</span><input id="text-spacing" type="number" value="0.02" step="0.01"></label>
+          <label class="field"><span>Y 倍率</span><input type="text" value="1.0（固定）" disabled></label>
+        </div>
+
+        <label class="field">
+          <span>smoothness = <b id="text-smooth-value">0.50</b></span>
+          <input id="text-smooth" type="range" min="0" max="1" step="0.01" value="0.5">
+        </label>
+        <div class="hint">
+          字号使用与坐标相同的模型单位。字号过小时栅格像素会变少，骨架可能断裂；
+          工具会按字号自动提高光栅倍率，建议不小于 0.01。浏览器字体与实际 TTF
+          字形也会有差异。
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="text-render">重新计算</button>
+          <button class="ghost" id="text-copy">复制坐标</button>
+        </div>
+      </aside>
+
+      <section class="viewer">
+        <div class="canvas-wrap">
+          <canvas id="text-canvas"></canvas>
+          <div class="badge">蓝线：骨架线　红点：节点　绿十字：锚点</div>
+        </div>
+        <div class="stats" id="text-stats"></div>
+        <div class="output-head"><span class="name">骨架线节点</span><span class="small">JSON</span></div>
+        <pre class="output" id="text-output"></pre>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+/* ======================= 基础工具 ======================= */
+const TAU = Math.PI * 2;
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const num = (id, fallback = 0) => {
+  const value = Number($(id).value);
+  return Number.isFinite(value) ? value : fallback;
+};
+const finite = (value) => typeof value === "number" && Number.isFinite(value);
+const fmt = (value, digits = 4) => {
+  if (!Number.isFinite(value)) return "—";
+  const text = Number(value).toFixed(digits);
+  return text.replace(/\.?0+$/, "") || "0";
+};
+const round4 = (value) => Math.round(value * 10000) / 10000;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpPoint = (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
+const cross = (ax, ay, bx, by) => ax * by - ay * bx;
+
+function setStats(id, text, isError = false) {
+  const element = $(id);
+  element.textContent = text;
+  element.classList.toggle("error", isError);
+}
+
+function showOutput(id, value) {
+  $(id).textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+}
+
+async function copyOutput(id) {
+  const text = $(id).textContent;
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+}
+
+function setupCanvas(canvas) {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(320, rect.width);
+  const height = Math.max(260, rect.height);
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  return { ctx, width, height };
+}
+
+function niceStep(raw) {
+  if (!Number.isFinite(raw) || raw <= 0) return 1;
+  const power = Math.pow(10, Math.floor(Math.log10(raw)));
+  const value = raw / power;
+  const factor = value <= 1 ? 1 : value <= 2 ? 2 : value <= 5 ? 5 : 10;
+  return factor * power;
+}
+
+function fitView(points, width, height, padding = 48) {
+  const finitePoints = points.filter((p) => p && finite(p.x) && finite(p.y));
+  if (!finitePoints.length) {
+    return {
+      sx: (x) => width / 2 + x * 40,
+      sy: (y) => height / 2 - y * 40,
+      scale: 40,
+      cx: 0,
+      cy: 0,
+    };
+  }
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const point of finitePoints) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  let spanX = maxX - minX;
+  let spanY = maxY - minY;
+  if (spanX < 1e-9) spanX = 1;
+  if (spanY < 1e-9) spanY = 1;
+  const scale = Math.min(
+    Math.max(1, width - padding * 2) / spanX,
+    Math.max(1, height - padding * 2) / spanY
+  );
+  const cx = (minX + maxX) * 0.5;
+  const cy = (minY + maxY) * 0.5;
+  return {
+    scale,
+    cx,
+    cy,
+    sx: (x) => width * 0.5 + (x - cx) * scale,
+    sy: (y) => height * 0.5 - (y - cy) * scale,
+    minX,
+    maxX,
+    minY,
+    maxY,
+  };
+}
+
+function drawGrid(ctx, width, height, view) {
+  const rawStepX = (view.maxX - view.minX || 1) / 8;
+  const rawStepY = (view.maxY - view.minY || 1) / 8;
+  const stepX = niceStep(rawStepX);
+  const stepY = niceStep(rawStepY);
+  const left = view.minX - stepX;
+  const right = view.maxX + stepX;
+  const bottom = view.minY - stepY;
+  const top = view.maxY + stepY;
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#e7ecf4";
+  ctx.fillStyle = "#8a96a8";
+  ctx.font = "11px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  for (let x = Math.ceil(left / stepX) * stepX; x <= right; x += stepX) {
+    const sx = view.sx(x);
+    if (sx < -20 || sx > width + 20) continue;
+    ctx.beginPath();
+    ctx.moveTo(sx, 0);
+    ctx.lineTo(sx, height);
+    ctx.stroke();
+    if (Math.abs(x) > stepX * 0.01) {
+      ctx.fillText(fmt(x, 2), sx, height - 17);
+    }
+  }
+
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for (let y = Math.ceil(bottom / stepY) * stepY; y <= top; y += stepY) {
+    const sy = view.sy(y);
+    if (sy < -20 || sy > height + 20) continue;
+    ctx.beginPath();
+    ctx.moveTo(0, sy);
+    ctx.lineTo(width, sy);
+    ctx.stroke();
+    if (Math.abs(y) > stepY * 0.01) {
+      ctx.fillText(fmt(y, 2), width - 8, sy);
+    }
+  }
+
+  // Axes
+  ctx.strokeStyle = "#c5cfdd";
+  ctx.lineWidth = 1.25;
+  if (view.sx(0) >= 0 && view.sx(0) <= width) {
+    ctx.beginPath();
+    ctx.moveTo(view.sx(0), 0);
+    ctx.lineTo(view.sx(0), height);
+    ctx.stroke();
+  }
+  if (view.sy(0) >= 0 && view.sy(0) <= height) {
+    ctx.beginPath();
+    ctx.moveTo(0, view.sy(0));
+    ctx.lineTo(width, view.sy(0));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPoint(ctx, point, color, radius = 4) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, radius, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawArrow(ctx, from, to, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const size = 7;
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(
+    to.x - size * Math.cos(angle - 0.45),
+    to.y - size * Math.sin(angle - 0.45)
+  );
+  ctx.lineTo(
+    to.x - size * Math.cos(angle + 0.45),
+    to.y - size * Math.sin(angle + 0.45)
+  );
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ======================= 缓动 ======================= */
+function cubicBezierAt(x1, y1, x2, y2, t) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  let low = 0;
+  let high = 1;
+  for (let i = 0; i < 60; i += 1) {
+    const mid = (low + high) * 0.5;
+    const inv = 1 - mid;
+    const x = 3 * inv * inv * mid * x1 + 3 * inv * mid * mid * x2 + mid ** 3;
+    if (x < t) low = mid;
+    else high = mid;
+  }
+  const u = (low + high) * 0.5;
+  const inv = 1 - u;
+  return 3 * inv * inv * u * y1 + 3 * inv * u * u * y2 + u ** 3;
+}
+
+function easeValue(ease, t) {
+  if (Array.isArray(ease)) {
+    return cubicBezierAt(ease[0], ease[1], ease[2], ease[3], t);
+  }
+  const u = t <= 0 ? 0 : t >= 1 ? 1 : t;
+  switch (ease) {
+    case 0: return u;
+    case 1: return u * u;
+    case 2: return 1 - (1 - u) ** 2;
+    case 3: return u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) ** 2;
+    case 4: return u ** 3;
+    case 5: return 1 - (1 - u) ** 3;
+    case 6: return u < 0.5 ? 4 * u ** 3 : 1 - 4 * (1 - u) ** 3;
+    case 7: return u ** 4;
+    case 8: return 1 - (1 - u) ** 4;
+    case 9: return u < 0.5 ? 8 * u ** 4 : 1 - 8 * (1 - u) ** 4;
+    case 10: return u ** 5;
+    case 11: return 1 - (1 - u) ** 5;
+    case 12: return u < 0.5 ? 16 * u ** 5 : 1 - 16 * (1 - u) ** 5;
+    case 13: return 0;
+    case 14: return 1;
+    case 15: return 1 - Math.sqrt(Math.max(0, 1 - u * u));
+    case 16: return Math.sqrt(Math.max(0, 1 - (1 - u) ** 2));
+    case 17: return Math.sin(Math.PI * u / 2);
+    case 18: return 1 - Math.cos(Math.PI * u / 2);
+    case 19:
+      if (u < 0.5) return 0.5 * (1 - Math.sqrt(Math.max(0, 1 - 4 * u * u)));
+      {
+        const v = -2 * u + 2;
+        return 0.5 * (Math.sqrt(Math.max(0, 1 - v * v)) + 1);
+      }
+    case 20: {
+      const v = 2 * u - 1;
+      const root = Math.sqrt(Math.max(0, 1 - v * v));
+      return u < 0.5 ? 0.5 * root : 1 - 0.5 * root;
+    }
+    case 21: return 0.5 * (1 - Math.cos(Math.PI * u));
+    case 22:
+      return u < 0.5
+        ? 0.5 * Math.sin(Math.PI * u)
+        : 1 - 0.5 * Math.sin(Math.PI * u);
+    case 23: return u === 0 ? 0 : 2 ** (10 * u - 10);
+    case 24: return u === 1 ? 1 : 1 - 2 ** (-10 * u);
+    case 25:
+      if (u === 0) return 0;
+      if (u < 0.5) return 2 ** (20 * u - 11);
+      if (u === 1) return 1;
+      return 1 - 2 ** (-20 * u + 9);
+    default: return u;
+  }
+}
+
+const EASE_NAMES = [
+  "Linear", "In Quad", "Out Quad", "InOut Quad",
+  "In Cubic", "Out Cubic", "InOut Cubic",
+  "In Quart", "Out Quart", "InOut Quart",
+  "In Quint", "Out Quint", "InOut Quint",
+  "Zero", "One", "In Circle", "Out Circle", "Sin", "Cos",
+  "19", "20", "21", "22", "23", "24", "25",
+];
+
+function initEaseSelect() {
+  const select = $("ease-type");
+  EASE_NAMES.forEach((name, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = `${index} · ${name}`;
+    select.appendChild(option);
+  });
+  const custom = document.createElement("option");
+  custom.value = "custom";
+  custom.textContent = "Cubic Bezier 自定义";
+  select.appendChild(custom);
+  // A non-linear default makes the difference between the two view modes
+  // visible immediately and gives recursion/priority something to insert.
+  select.value = "1";
+}
+
+function currentEase() {
+  const selectValue = $("ease-type").value;
+  if (selectValue === "custom") {
+    const values = [
+      num("ease-bx1", NaN),
+      num("ease-by1", NaN),
+      num("ease-bx2", NaN),
+      num("ease-by2", NaN),
+    ];
+    if (values.some((value) => !finite(value))) return null;
+    if (values[0] < 0 || values[0] > 1 || values[2] < 0 || values[2] > 1) {
+      return null;
+    }
+    return values;
+  }
+  return Number(selectValue);
+}
+
+function directPointAt(start, end, ease, u) {
+  const ratio = easeValue(ease, clamp(u, 0, 1));
+  return { x: lerp(start.x, end.x, ratio), y: lerp(start.y, end.y, ratio) };
+}
+
+function lineNodePointAt(start, end, ease, u) {
+  const t = clamp(u, 0, 1);
+  return {
+    x: lerp(start.x, end.x, easeValue(ease, t)),
+    y: lerp(start.y, end.y, t),
+  };
+}
+
+function quantilesFromCumulative(cumulative, fractions) {
+  const total = cumulative[cumulative.length - 1];
+  if (!(total > 0)) return null;
+  const result = [];
+  let index = 0;
+  for (const fraction of fractions) {
+    const target = total * fraction;
+    while (index < cumulative.length - 1 && cumulative[index] < target) {
+      index += 1;
+    }
+    if (index === 0) {
+      result.push(0);
+    } else {
+      const left = cumulative[index - 1];
+      const span = cumulative[index] - left;
+      const ratio = span === 0 ? 0 : (target - left) / span;
+      result.push((index - 1 + ratio) / (cumulative.length - 1));
+    }
+  }
+  return result;
+}
+
+function insertionError(pointAt, u0, u1) {
+  const mid = (u0 + u1) * 0.5;
+  const a = pointAt(u0);
+  const b = pointAt(u1);
+  const m = pointAt(mid);
+  const linear = { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5 };
+  const chord = dist(a, b);
+  if (chord <= 1e-15) return { error: 0, mid };
+  return { error: dist(m, linear) / chord, mid };
+}
+
+function makeInsertionSamples(pointAt, strategy, precision) {
+  if (!(precision > 0)) return { error: "precision 必须大于 0" };
+  let samples = [];
+
+  if (strategy === "uniform" || strategy === "arc" || strategy === "curvature") {
+    const count = Math.max(1, Math.min(400, Math.floor(precision)));
+    const fractions = Array.from({ length: count }, (_, i) => (i + 1) / (count + 1));
+    if (strategy === "uniform") {
+      samples = fractions;
+    } else {
+      const steps = 512;
+      const points = Array.from(
+        { length: steps + 1 },
+        (_, i) => pointAt(i / steps)
+      );
+      let weights = [];
+      if (strategy === "arc") {
+        weights = points.map((point, index) => {
+          if (index === 0) return 0;
+          return dist(points[index - 1], point);
+        });
+      } else {
+        weights = Array(points.length).fill(0);
+        for (let i = 1; i < points.length - 1; i += 1) {
+          const ax = points[i - 1].x - 2 * points[i].x + points[i + 1].x;
+          const ay = points[i - 1].y - 2 * points[i].y + points[i + 1].y;
+          weights[i] = Math.hypot(ax, ay);
+        }
+      }
+      const cumulative = [0];
+      for (let i = 1; i < weights.length; i += 1) {
+        cumulative.push(cumulative[i - 1] + weights[i]);
+      }
+      if (cumulative[cumulative.length - 1] <= 0) {
+        samples = fractions;
+      } else {
+        samples = quantilesFromCumulative(cumulative, fractions) || fractions;
+      }
+    }
+  } else if (strategy === "recursion" || strategy === "priority") {
+    const threshold = precision;
+    if (strategy === "recursion") {
+      const result = [];
+      function recurse(u0, u1, depth) {
+        if (depth > 24 || result.length >= 2000) return;
+        const value = insertionError(pointAt, u0, u1);
+        if (value.error <= threshold) return;
+        result.push(value.mid);
+        recurse(u0, value.mid, depth + 1);
+        recurse(value.mid, u1, depth + 1);
+      }
+      recurse(0, 1, 0);
+      samples = result;
+    } else {
+      const heap = [];
+      const push = (item) => {
+        heap.push(item);
+        let index = heap.length - 1;
+        while (index > 0) {
+          const parent = (index - 1) >> 1;
+          if (heap[parent].error >= heap[index].error) break;
+          [heap[parent], heap[index]] = [heap[index], heap[parent]];
+          index = parent;
+        }
+      };
+      const pop = () => {
+        const top = heap[0];
+        const last = heap.pop();
+        if (heap.length && last) {
+          heap[0] = last;
+          let index = 0;
+          while (true) {
+            const left = index * 2 + 1;
+            const right = left + 1;
+            let largest = index;
+            if (left < heap.length && heap[left].error > heap[largest].error) largest = left;
+            if (right < heap.length && heap[right].error > heap[largest].error) largest = right;
+            if (largest === index) break;
+            [heap[index], heap[largest]] = [heap[largest], heap[index]];
+            index = largest;
+          }
+        }
+        return top;
+      };
+      const initial = insertionError(pointAt, 0, 1);
+      push({ error: initial.error, u0: 0, u1: 1, mid: initial.mid, depth: 0 });
+      const result = [];
+      while (heap.length && result.length < 2000) {
+        const item = pop();
+        if (item.error <= threshold) break;
+        result.push(item.mid);
+        if (item.depth < 24) {
+          const left = insertionError(pointAt, item.u0, item.mid);
+          const right = insertionError(pointAt, item.mid, item.u1);
+          push({ error: left.error, u0: item.u0, u1: item.mid, mid: left.mid, depth: item.depth + 1 });
+          push({ error: right.error, u0: item.mid, u1: item.u1, mid: right.mid, depth: item.depth + 1 });
+        }
+      }
+      samples = result;
+    }
+  } else {
+    return { error: "未知插入策略" };
+  }
+
+  const unique = [];
+  const seen = new Set();
+  for (const u of samples.sort((a, b) => a - b)) {
+    const rounded = Math.round(u * 1e9) / 1e9;
+    if (!(rounded > 0 && rounded < 1) || seen.has(rounded)) continue;
+    seen.add(rounded);
+    unique.push(rounded);
+  }
+  return { samples: unique };
+}
+
+function drawNodeMarker(ctx, point, color, shape = "circle", radius = 4.2) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  if (shape === "square") {
+    ctx.fillRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
+  } else if (shape === "diamond") {
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y - radius * 1.2);
+    ctx.lineTo(point.x + radius * 1.2, point.y);
+    ctx.lineTo(point.x, point.y + radius * 1.2);
+    ctx.lineTo(point.x - radius * 1.2, point.y);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, radius, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderEase() {
+  const { ctx, width, height } = setupCanvas($("ease-canvas"));
+  const start = { x: num("ease-x0"), y: num("ease-y0") };
+  const end = { x: num("ease-x1"), y: num("ease-y1") };
+  const ease = currentEase();
+  if (ease === null) {
+    setStats("ease-stats", "缓动参数非法：x1/x2 必须在 0..1，且不能留空。", true);
+    showOutput("ease-output", {});
+    return;
+  }
+
+  const viewMode = $("ease-view").value;
+  const showDirect = viewMode !== "line";
+  const showLine = viewMode !== "direct";
+  const strategy = $("ease-strategy").value;
+  const precision = num("ease-precision", 3);
+  const directAt = (u) => directPointAt(start, end, ease, u);
+  const lineAt = (u) => lineNodePointAt(start, end, ease, u);
+
+  const warnings = [];
+  let directSamples = [];
+  let lineSamples = [];
+  if (showDirect) {
+    const result = makeInsertionSamples(directAt, strategy, precision);
+    if (result.error) {
+      setStats("ease-stats", result.error, true);
+      showOutput("ease-output", {});
+      return;
+    }
+    directSamples = result.samples;
+  }
+  const lineValid = end.y > start.y + 1e-12;
+  if (showLine) {
+    if (!lineValid) {
+      warnings.push("线节点缓动要求终点 Y > 起点 Y");
+    } else {
+      const result = makeInsertionSamples(lineAt, strategy, precision);
+      if (result.error) {
+        setStats("ease-stats", result.error, true);
+        showOutput("ease-output", {});
+        return;
+      }
+      lineSamples = result.samples;
+    }
+  }
+  if (!showDirect && !lineValid) {
+    setStats("ease-stats", "线节点缓动要求终点 Y > 起点 Y。", true);
+    showOutput("ease-output", {});
+    return;
+  }
+
+  const directPoints = directSamples.map((u) => ({ ...directAt(u), u }));
+  const linePoints = lineSamples.map((u) => ({ ...lineAt(u), u }));
+  const allPoints = [start, end, ...directPoints, ...linePoints];
+  const view = fitView(allPoints, width, height, 62);
+  drawGrid(ctx, width, height, view);
+
+  // Original straight segment.
+  ctx.save();
+  ctx.setLineDash([6, 6]);
+  ctx.strokeStyle = "#a8b3c5";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(view.sx(start.x), view.sy(start.y));
+  ctx.lineTo(view.sx(end.x), view.sy(end.y));
+  ctx.stroke();
+  ctx.restore();
+
+  function drawCurve(pointAt, color, lineWidth, dash = []) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    for (let i = 0; i <= 360; i += 1) {
+      const point = pointAt(i / 360);
+      const x = view.sx(point.x);
+      const y = view.sy(point.y);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPolyline(points, color, lineWidth) {
+    if (points.length < 2) return;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const x = view.sx(point.x);
+      const y = view.sy(point.y);
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (showDirect) drawCurve(directAt, "#2563eb", 2.2);
+  if (showLine) {
+    // The chart line itself is piecewise straight between line nodes.
+    drawCurve(lineAt, "rgba(234, 88, 12, .30)", 1.5, [5, 5]);
+    drawPolyline([start, ...linePoints, end], "#ea580c", 2.2);
+  }
+
+  const labelNodes = directPoints.length + linePoints.length <= 24;
+  if (showDirect) {
+    directPoints.forEach((point, index) => {
+      drawNodeMarker(ctx, { x: view.sx(point.x), y: view.sy(point.y) }, "#2563eb", "circle");
+      if (labelNodes) {
+        ctx.save();
+        ctx.fillStyle = "#1d4ed8";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.fillText(`D${index + 1}`, view.sx(point.x) + 6, view.sy(point.y) - 6);
+        ctx.restore();
+      }
+    });
+  }
+  if (showLine) {
+    linePoints.forEach((point, index) => {
+      drawNodeMarker(ctx, { x: view.sx(point.x), y: view.sy(point.y) }, "#ea580c", "square");
+      if (labelNodes) {
+        ctx.save();
+        ctx.fillStyle = "#c2410c";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.fillText(`L${index + 1}`, view.sx(point.x) + 6, view.sy(point.y) + 14);
+        ctx.restore();
+      }
+    });
+  }
+
+  drawPoint(ctx, { x: view.sx(start.x), y: view.sy(start.y) }, "#059669", 6);
+  drawPoint(ctx, { x: view.sx(end.x), y: view.sy(end.y) }, "#7c3aed", 6);
+
+  ctx.save();
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.fillStyle = "#047857";
+  ctx.fillText("起点", view.sx(start.x) + 8, view.sy(start.y) + 16);
+  ctx.fillStyle = "#6d28d9";
+  ctx.fillText("终点", view.sx(end.x) + 8, view.sy(end.y) + 16);
+  ctx.restore();
+
+  if (
+    (strategy === "recursion" || strategy === "priority") &&
+    directPoints.length === 0 &&
+    linePoints.length === 0
+  ) {
+    warnings.push("曲线为直线，recursion/priority 没有误差可插点");
+  }
+
+  const modeText =
+    viewMode === "direct"
+      ? "蓝：二维插点　灰虚线：原始直线"
+      : viewMode === "line"
+        ? "橙线：节点连线　淡橙虚线：目标曲线　灰虚线：原始直线"
+        : "蓝：二维插点　橙线：节点连线　淡橙虚线：目标曲线　灰虚线：原始直线";
+  $("ease-badge").textContent = modeText;
+
+  const parts = [];
+  if (showDirect) parts.push(`二维 ${directPoints.length}`);
+  if (showLine) parts.push(lineValid ? `线节点 ${linePoints.length}` : "线节点不可用");
+  if (warnings.length) parts.push(warnings[0]);
+  setStats(
+    "ease-stats",
+    `策略 ${strategy} · precision ${fmt(precision, 4)} · ${parts.join(" · ")}`
+  );
+
+  const output = {};
+  if (showDirect) {
+    output.direct = directPoints.map((point) => ({
+      x: round4(point.x),
+      y: round4(point.y),
+      u: round4(point.u),
+    }));
+  }
+  if (showLine && lineValid) {
+    output.linePoint = linePoints.map((point) => ({
+      x: round4(point.x),
+      y: round4(point.y),
+      u: round4(point.u),
+    }));
+  }
+  showOutput("ease-output", output);
+}
+
+/* ======================= 填充线 ======================= */
+function parsePolygon(text) {
+  const points = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const parts = line.split(/[,，\s]+/).filter(Boolean);
+    if (parts.length < 2) return null;
+    const x = Number(parts[0]);
+    const y = Number(parts[1]);
+    if (!finite(x) || !finite(y)) return null;
+    points.push({ x, y });
+  }
+  while (points.length > 1 && dist(points[0], points[points.length - 1]) <= 1e-9) {
+    points.pop();
+  }
+  return points.length >= 3 ? points : null;
+}
+
+function pointInPolygon(polygon, point) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const a = polygon[i];
+    const b = polygon[j];
+    const intersects =
+      ((a.y > point.y) !== (b.y > point.y)) &&
+      (point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y || 1e-15) + a.x);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function lineIntervals(polygon, origin, direction) {
+  const values = [];
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i];
+    const b = polygon[(i + 1) % polygon.length];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const denominator = cross(direction.x, direction.y, ex, ey);
+    if (Math.abs(denominator) <= 1e-12) continue;
+    const dx = a.x - origin.x;
+    const dy = a.y - origin.y;
+    const t = cross(dx, dy, ex, ey) / denominator;
+    const s = cross(dx, dy, direction.x, direction.y) / denominator;
+    if (s >= -1e-9 && s <= 1 + 1e-9 && finite(t)) values.push(t);
+  }
+  values.sort((a, b) => a - b);
+  const unique = [];
+  for (const value of values) {
+    if (!unique.length || Math.abs(unique[unique.length - 1] - value) > 1e-7) {
+      unique.push(value);
+    }
+  }
+  const intervals = [];
+  for (let i = 0; i + 1 < unique.length; i += 2) {
+    if (unique[i + 1] - unique[i] > 1e-7) {
+      intervals.push([unique[i], unique[i + 1]]);
+    }
+  }
+  return intervals;
+}
+
+function rayBoundary(polygon, origin, direction) {
+  let best = Infinity;
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i];
+    const b = polygon[(i + 1) % polygon.length];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const denominator = cross(direction.x, direction.y, ex, ey);
+    if (Math.abs(denominator) <= 1e-12) continue;
+    const dx = a.x - origin.x;
+    const dy = a.y - origin.y;
+    const t = cross(dx, dy, ex, ey) / denominator;
+    const s = cross(dx, dy, direction.x, direction.y) / denominator;
+    if (t > 1e-9 && s >= -1e-9 && s <= 1 + 1e-9) {
+      best = Math.min(best, t);
+    }
+  }
+  if (!Number.isFinite(best)) return null;
+  return { x: origin.x + direction.x * best, y: origin.y + direction.y * best };
+}
+
+function polygonPerimeter(polygon) {
+  let total = 0;
+  for (let i = 0; i < polygon.length; i += 1) {
+    total += dist(polygon[i], polygon[(i + 1) % polygon.length]);
+  }
+  return total;
+}
+
+function boundaryAtDistance(polygon, distance) {
+  let remaining = distance;
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i];
+    const b = polygon[(i + 1) % polygon.length];
+    const length = dist(a, b);
+    if (length <= 1e-12) continue;
+    if (remaining <= length + 1e-9) {
+      const t = clamp(remaining / length, 0, 1);
+      return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
+    }
+    remaining -= length;
+  }
+  return { ...polygon[0] };
+}
+
+function boundarySamples(polygon, step) {
+  const total = polygonPerimeter(polygon);
+  if (!(total > 0) || !(step > 0)) return [];
+  const samples = [{ ...polygon[0] }];
+  let distance = 0;
+  while (distance + step < total - 1e-9 && samples.length < 2000) {
+    distance += step;
+    samples.push(boundaryAtDistance(polygon, distance));
+  }
+  return samples;
+}
+
+function buildFillLines(polygon, style, precision, center, angleDeg) {
+  if (!(precision > 0)) return { error: "precision 必须大于 0" };
+  if (style === "linear") {
+    const theta = angleDeg * Math.PI / 180;
+    const normal = { x: Math.cos(theta), y: Math.sin(theta) };
+    const direction = { x: -Math.sin(theta), y: Math.cos(theta) };
+    const projections = polygon.map((point) => point.x * normal.x + point.y * normal.y);
+    const minimum = Math.min(...projections);
+    const maximum = Math.max(...projections);
+    if (!(maximum > minimum)) return { lines: [], warning: "多边形在法线方向没有跨度" };
+    const lines = [];
+    let offset = minimum;
+    let count = 0;
+    while (offset <= maximum + 1e-9) {
+      const origin = { x: normal.x * offset, y: normal.y * offset };
+      const intervals = lineIntervals(polygon, origin, direction);
+      for (const [t0, t1] of intervals) {
+        lines.push([
+          { x: origin.x + direction.x * t0, y: origin.y + direction.y * t0 },
+          { x: origin.x + direction.x * t1, y: origin.y + direction.y * t1 },
+        ]);
+        count += 1;
+        if (count >= 4000) {
+          return { lines, warning: "填充线过多，已截断到 4000 条" };
+        }
+      }
+      offset += precision;
+    }
+    return { lines };
+  }
+
+  if (!center || !finite(center.x) || !finite(center.y)) {
+    return { error: "该填充方式需要中心点" };
+  }
+  if (!pointInPolygon(polygon, center)) {
+    return { error: "中心点不在多边形内部；库实现会失败" };
+  }
+
+  const isBorder = style === "radialBorder" || style === "conicBorder";
+  const lines = [];
+  if (isBorder) {
+    const samples = boundarySamples(polygon, precision);
+    for (const boundary of samples) {
+      const dx = boundary.x - center.x;
+      const dy = boundary.y - center.y;
+      if (Math.hypot(dx, dy) <= 1e-9) continue;
+      lines.push([{ ...center }, boundary]);
+    }
+    return { lines };
+  }
+
+  const step = TAU * precision;
+  if (!(step > 0)) return { error: "precision 必须大于 0" };
+  const count = Math.min(2000, Math.max(1, Math.ceil((TAU - 1e-9) / step)));
+  const baseAngle = style === "conic" ? angleDeg * Math.PI / 180 : 0;
+  for (let i = 0; i < count; i += 1) {
+    const angle = baseAngle + i * step;
+    const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+    const boundary = rayBoundary(polygon, center, direction);
+    if (boundary) lines.push([{ ...center }, boundary]);
+  }
+  return { lines };
+}
+
+function makeStar(cx, cy, outer = 2.2, inner = 0.9, points = 5) {
+  const result = [];
+  for (let i = 0; i < points * 2; i += 1) {
+    const radius = i % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + i * Math.PI / points;
+    result.push({
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius,
+    });
+  }
+  return result;
+}
+
+function applyFillPreset() {
+  const preset = $("fill-preset").value;
+  if (preset === "custom") return;
+  let polygon;
+  let center;
+  if (preset === "rect") {
+    polygon = [{x:0,y:0},{x:0.4,y:0},{x:0.4,y:0.3},{x:0,y:0.3}];
+    center = {x:0.2, y:0.15};
+  } else if (preset === "concave") {
+    polygon = [
+      {x:0,y:0},{x:0.4,y:0},{x:0.4,y:0.12},
+      {x:0.15,y:0.12},{x:0.15,y:0.3},{x:0,y:0.3},
+    ];
+    center = {x:0.08, y:0.18};
+  } else {
+    polygon = makeStar(0, 0, 0.22, 0.09, 5);
+    center = {x:0, y:0};
+  }
+  $("fill-points").value = polygon.map((point) => `${fmt(point.x, 2)},${fmt(point.y, 2)}`).join("\n");
+  if (center) {
+    $("fill-cx").value = fmt(center.x, 2);
+    $("fill-cy").value = fmt(center.y, 2);
+  }
+}
+
+function updateFillControls() {
+  const style = $("fill-style").value;
+  const needsCenter = style !== "linear";
+  const needsAngle = style === "linear" || style === "conic" || style === "conicBorder";
+  $("fill-cx").disabled = !needsCenter;
+  $("fill-cy").disabled = !needsCenter;
+  $("fill-angle").disabled = !needsAngle;
+  const hint = $("fill-hint");
+  if (style === "linear") {
+    hint.textContent = "precision = 平行线间距（坐标单位）";
+  } else if (style === "radial" || style === "conic") {
+    hint.textContent = `precision = 整圆比例，0.01 ≈ ${fmt(0.01 * 360, 2)}°`;
+  } else {
+    hint.textContent = "precision = 沿多边形边界的采样间距（坐标单位）";
+  }
+}
+
+function renderFill() {
+  const { ctx, width, height } = setupCanvas($("fill-canvas"));
+  const polygon = parsePolygon($("fill-points").value);
+  if (!polygon) {
+    setStats("fill-stats", "多边形需要至少 3 个合法点，每行格式为 x,y。", true);
+    showOutput("fill-output", []);
+    return;
+  }
+  updateFillControls();
+  const style = $("fill-style").value;
+  const precision = num("fill-precision", 0.025);
+  const center = { x: num("fill-cx", 0), y: num("fill-cy", 0) };
+  const angleDeg = num("fill-angle", 0);
+  const result = buildFillLines(polygon, style, precision, center, angleDeg);
+  if (result.error) {
+    setStats("fill-stats", result.error, true);
+    showOutput("fill-output", []);
+    drawPolygonOnly(ctx, width, height, polygon, center);
+    return;
+  }
+  const lines = result.lines || [];
+  const viewPoints = [...polygon];
+  for (const line of lines) viewPoints.push(...line);
+  if (style !== "linear") viewPoints.push(center);
+  const view = fitView(viewPoints, width, height, 56);
+  drawGrid(ctx, width, height, view);
+
+  // Polygon
+  ctx.save();
+  ctx.fillStyle = "rgba(37, 99, 235, .055)";
+  ctx.strokeStyle = "#1d4ed8";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  polygon.forEach((point, index) => {
+    const x = view.sx(point.x);
+    const y = view.sy(point.y);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Fill lines
+  ctx.save();
+  ctx.strokeStyle = "rgba(37, 99, 235, .78)";
+  ctx.lineWidth = 1.3;
+  for (const [a, b] of lines) {
+    ctx.beginPath();
+    ctx.moveTo(view.sx(a.x), view.sy(a.y));
+    ctx.lineTo(view.sx(b.x), view.sy(b.y));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  if (style !== "linear") {
+    drawPoint(ctx, { x: view.sx(center.x), y: view.sy(center.y) }, "#059669", 6);
+    if (style === "conic" || style === "conicBorder") {
+      const angle = angleDeg * Math.PI / 180;
+      const length = view.scale * 1.1;
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      drawArrow(
+        ctx,
+        { x: view.sx(center.x), y: view.sy(center.y) },
+        {
+          x: view.sx(center.x + Math.cos(angle) * 1.1),
+          y: view.sy(center.y + Math.sin(angle) * 1.1),
+        },
+        "#f59e0b"
+      );
+      ctx.restore();
+    }
+  }
+
+  const warning = result.warning ? ` · ${result.warning}` : "";
+  setStats(
+    "fill-stats",
+    `${style} · precision ${fmt(precision, 4)} · ${lines.length} 条线段${warning}`
+  );
+  showOutput(
+    "fill-output",
+    lines.map((line) => line.map((point) => [round4(point.x), round4(point.y)]))
+  );
+}
+
+function drawPolygonOnly(ctx, width, height, polygon, center) {
+  const view = fitView([...polygon, center], width, height, 56);
+  drawGrid(ctx, width, height, view);
+  ctx.save();
+  ctx.strokeStyle = "#1d4ed8";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  polygon.forEach((point, index) => {
+    const x = view.sx(point.x);
+    const y = view.sy(point.y);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ======================= 细字骨架 ======================= */
+function skeletonize(binary, width, height) {
+  const image = new Uint8Array(binary);
+  let changed = true;
+  let guard = 0;
+  while (changed && guard < 220) {
+    changed = false;
+    guard += 1;
+    for (let step = 0; step < 2; step += 1) {
+      const remove = [];
+      for (let y = 1; y < height - 1; y += 1) {
+        for (let x = 1; x < width - 1; x += 1) {
+          const index = y * width + x;
+          if (!image[index]) continue;
+          const p2 = image[index - width];
+          const p3 = image[index - width + 1];
+          const p4 = image[index + 1];
+          const p5 = image[index + width + 1];
+          const p6 = image[index + width];
+          const p7 = image[index + width - 1];
+          const p8 = image[index - 1];
+          const p9 = image[index - width - 1];
+          const neighbors = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+          if (neighbors < 2 || neighbors > 6) continue;
+          let transitions = 0;
+          if (p2 === 0 && p3 === 1) transitions += 1;
+          if (p3 === 0 && p4 === 1) transitions += 1;
+          if (p4 === 0 && p5 === 1) transitions += 1;
+          if (p5 === 0 && p6 === 1) transitions += 1;
+          if (p6 === 0 && p7 === 1) transitions += 1;
+          if (p7 === 0 && p8 === 1) transitions += 1;
+          if (p8 === 0 && p9 === 1) transitions += 1;
+          if (p9 === 0 && p2 === 1) transitions += 1;
+          if (transitions !== 1) continue;
+          if (step === 0) {
+            if (p2 * p4 * p6 !== 0) continue;
+            if (p4 * p6 * p8 !== 0) continue;
+          } else {
+            if (p2 * p4 * p8 !== 0) continue;
+            if (p2 * p6 * p8 !== 0) continue;
+          }
+          remove.push(index);
+        }
+      }
+      if (remove.length) {
+        changed = true;
+        for (const index of remove) image[index] = 0;
+      }
+    }
+  }
+  return image;
+}
+
+function skeletonPaths(binary, width, height) {
+  const pixels = new Set();
+  for (let i = 0; i < binary.length; i += 1) {
+    if (binary[i]) pixels.add(i);
+  }
+  if (!pixels.size) return [];
+
+  const directions = [
+    [-1, 0], [-1, 1], [0, 1], [1, 1],
+    [1, 0], [1, -1], [0, -1], [-1, -1],
+  ];
+  const total = width * height;
+  const edgeKey = (a, b) => (a < b ? a * total + b : b * total + a);
+  const neighbors = new Map();
+  for (const index of pixels) {
+    const x = index % width;
+    const y = (index - x) / width;
+    const list = [];
+    for (const [dy, dx] of directions) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+      const other = ny * width + nx;
+      if (!pixels.has(other)) continue;
+      if (dx !== 0 && dy !== 0) {
+        if (pixels.has(y * width + nx) || pixels.has(ny * width + x)) continue;
+      }
+      list.push(other);
+    }
+    neighbors.set(index, list);
+  }
+
+  const nodes = new Set();
+  for (const [index, list] of neighbors) {
+    if (list.length !== 2) nodes.add(index);
+  }
+  const visited = new Set();
+  const paths = [];
+
+  function trace(start, first, stopAtStart) {
+    const path = [start, first];
+    visited.add(edgeKey(start, first));
+    let previous = start;
+    let current = first;
+    while (true) {
+      if (stopAtStart) {
+        if (current === start) break;
+      } else if (nodes.has(current)) {
+        break;
+      }
+      const candidates = neighbors.get(current).filter((point) => point !== previous);
+      if (!candidates.length) break;
+      const following = candidates[0];
+      if (following === start) {
+        visited.add(edgeKey(current, following));
+        path.push(following);
+        break;
+      }
+      const key = edgeKey(current, following);
+      if (visited.has(key)) break;
+      visited.add(key);
+      path.push(following);
+      previous = current;
+      current = following;
+    }
+    return path;
+  }
+
+  const sortedNodes = Array.from(nodes).sort((a, b) => a - b);
+  for (const start of sortedNodes) {
+    for (const first of neighbors.get(start)) {
+      if (visited.has(edgeKey(start, first))) continue;
+      const path = trace(start, first, false);
+      if (path.length >= 2) paths.push(path);
+    }
+  }
+
+  const sortedPixels = Array.from(pixels).sort((a, b) => a - b);
+  for (const start of sortedPixels) {
+    for (const first of neighbors.get(start)) {
+      if (visited.has(edgeKey(start, first))) continue;
+      const path = trace(start, first, true);
+      if (path.length >= 2) paths.push(path);
+    }
+  }
+  return paths;
+}
+
+function pointLineDistance(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= 1e-12) return Math.hypot(point.x - start.x, point.y - start.y);
+  return Math.abs(dx * (point.y - start.y) - dy * (point.x - start.x)) / length;
+}
+
+function simplifyPath(points, tolerance) {
+  if (points.length <= 2) return points.map((point) => ({ ...point }));
+  const keep = new Array(points.length).fill(false);
+  keep[0] = true;
+  keep[points.length - 1] = true;
+  const stack = [[0, points.length - 1]];
+  while (stack.length) {
+    const [start, end] = stack.pop();
+    if (end <= start + 1) continue;
+    let maximum = -1;
+    let index = -1;
+    for (let i = start + 1; i < end; i += 1) {
+      const distance = pointLineDistance(points[i], points[start], points[end]);
+      if (distance > maximum) {
+        maximum = distance;
+        index = i;
+      }
+    }
+    if (maximum > tolerance) {
+      keep[index] = true;
+      stack.push([start, index], [index, end]);
+    }
+  }
+  return points.filter((_, index) => keep[index]);
+}
+
+function simplifyClosedPath(points, tolerance) {
+  if (points.length <= 3) return points.map((point) => ({ ...point }));
+  let closed = points.slice();
+  if (dist(closed[0], closed[closed.length - 1]) <= 1e-9) closed.pop();
+  if (closed.length <= 2) return points.map((point) => ({ ...point }));
+  const start = closed[0];
+  let anchor = 1;
+  let best = -1;
+  for (let i = 1; i < closed.length; i += 1) {
+    const distance = dist(closed[i], start);
+    if (distance > best) {
+      best = distance;
+      anchor = i;
+    }
+  }
+  const firstHalf = simplifyPath(closed.slice(0, anchor + 1), tolerance);
+  const secondHalf = simplifyPath(closed.slice(anchor).concat([start]), tolerance);
+  const simplified = firstHalf.slice(0, -1).concat(secondHalf);
+  if (simplified.length >= 2) simplified.push({ ...simplified[0] });
+  return simplified;
+}
+
+function smoothPath(points, passes) {
+  if (passes <= 0 || points.length < 3) return points.map((point) => ({ ...point }));
+  let result = points.map((point) => ({ ...point }));
+  for (let pass = 0; pass < passes; pass += 1) {
+    if (result.length < 3) break;
+    const smoothed = [result[0]];
+    for (let i = 1; i < result.length - 1; i += 1) {
+      const a = result[i - 1];
+      const b = result[i];
+      const c = result[i + 1];
+      smoothed.push({
+        x: a.x * 0.25 + b.x * 0.5 + c.x * 0.25,
+        y: a.y * 0.25 + b.y * 0.5 + c.y * 0.25,
+      });
+    }
+    smoothed.push(result[result.length - 1]);
+    result = smoothed;
+  }
+  return result;
+}
+
+function dedupePoints(points) {
+  const result = [];
+  for (const point of points) {
+    const last = result[result.length - 1];
+    if (!last || Math.abs(last.x - point.x) > 1e-9 || Math.abs(last.y - point.y) > 1e-9) {
+      result.push({ x: point.x, y: point.y });
+    }
+  }
+  return result;
+}
+
+function splitMonotonic(points, jitter) {
+  if (points.length < 2) return [];
+  const runs = [];
+  let current = [points[0]];
+  let direction = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    const point = points[i];
+    const previous = current[current.length - 1];
+    const delta = point.y - previous.y;
+    if (Math.abs(delta) <= jitter) {
+      current.push({ x: point.x, y: previous.y });
+      continue;
+    }
+    const nextDirection = delta > 0 ? 1 : -1;
+    if (direction === 0) {
+      direction = nextDirection;
+      current.push(point);
+    } else if (nextDirection === direction) {
+      current.push(point);
+    } else {
+      if (current.length >= 2) runs.push({ direction, points: current });
+      current = [previous, point];
+      direction = nextDirection;
+    }
+  }
+  if (current.length >= 2) runs.push({ direction, points: current });
+
+  const result = [];
+  for (const run of runs) {
+    const cleaned = [{ ...run.points[0] }];
+    for (let i = 1; i < run.points.length; i += 1) {
+      const point = run.points[i];
+      const previous = cleaned[cleaned.length - 1];
+      let y = point.y;
+      if (run.direction < 0) y = Math.min(point.y, previous.y);
+      else if (run.direction > 0) y = Math.max(point.y, previous.y);
+      else y = previous.y;
+      cleaned.push({ x: point.x, y });
+    }
+    if (run.direction < 0) cleaned.reverse();
+    const deduped = dedupePoints(cleaned);
+    if (deduped.length >= 2) result.push(deduped);
+  }
+  return result;
+}
+
+const GENERIC_FONT_FAMILIES = new Set([
+  "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui",
+]);
+
+let customFontFace = null;
+let customFontFamily = null;
+let customFontSerial = 0;
+
+function fontFamilyCss(value) {
+  const name = String(value || "").trim();
+  if (!name) return "sans-serif";
+  if (GENERIC_FONT_FAMILIES.has(name.toLowerCase())) return name;
+  return `"${name.replace(/"/g, "")}"`;
+}
+
+function activeTextFontFamily() {
+  return customFontFamily || $("text-font").value.trim() || "Microsoft YaHei";
+}
+
+function updateFontStatus(message, isError = false) {
+  const element = $("text-font-status");
+  element.textContent = message;
+  element.style.color = isError ? "#dc2626" : "";
+}
+
+async function loadTextFontFile(file) {
+  if (!file) return;
+  try {
+    const buffer = await file.arrayBuffer();
+    const family = `RizToolFont_${Date.now()}_${customFontSerial += 1}`;
+    const face = new FontFace(family, buffer);
+    await face.load();
+    if (customFontFace) document.fonts.delete(customFontFace);
+    customFontFace = face;
+    customFontFamily = family;
+    document.fonts.add(face);
+    await document.fonts.load(`100px "${family}"`);
+    $("text-font").disabled = true;
+    updateFontStatus(`当前：字体文件 ${file.name}`);
+    renderText();
+  } catch (error) {
+    updateFontStatus(`字体文件加载失败：${error.message || error}`, true);
+  } finally {
+    $("text-font-file").value = "";
+  }
+}
+
+function resetTextFont() {
+  if (customFontFace) document.fonts.delete(customFontFace);
+  customFontFace = null;
+  customFontFamily = null;
+  $("text-font").disabled = false;
+  $("text-font").value = "Microsoft YaHei";
+  updateFontStatus("当前：系统字体 Microsoft YaHei");
+  renderText();
+}
+
+function buildTextSkeleton(text, fontFamily, align, anchor, fontSize, spacingEm, smoothness) {
+  const chars = Array.from(text.replace(/[\r\n]/g, " "));
+  if (!chars.length) return { error: "请输入文本" };
+  if (!(fontSize > 0)) return { error: "字号必须大于 0" };
+  if (!(smoothness >= 0 && smoothness <= 1)) return { error: "smoothness 必须在 0..1" };
+
+  const fontSpec = fontFamilyCss(fontFamily);
+  const probe = document.createElement("canvas").getContext("2d");
+  // Keep roughly the same raster resolution regardless of model font size.
+  // This is enough for chart-scale fonts such as 0.2 without shrinking the
+  // actual canvas text to a few pixels.
+  let scale = clamp(260 / fontSize, 1.2, 12000);
+  let fontPx = fontSize * scale;
+  let spacingPx = spacingEm * fontSize * scale;
+
+  probe.font = `${fontPx}px ${fontSpec}`;
+  let advances = chars.map((char) => probe.measureText(char).width);
+  let textWidthModel =
+    (advances.reduce((sum, value) => sum + value, 0) + spacingPx * Math.max(0, chars.length - 1)) / scale;
+
+  if (textWidthModel * scale > 2600) {
+    const correction = 2600 / (textWidthModel * scale);
+    scale *= correction;
+    fontPx = fontSize * scale;
+    spacingPx = spacingEm * fontSize * scale;
+    probe.font = `${fontPx}px ${fontSpec}`;
+    advances = chars.map((char) => probe.measureText(char).width);
+    textWidthModel =
+      (advances.reduce((sum, value) => sum + value, 0) + spacingPx * Math.max(0, chars.length - 1)) / scale;
+  }
+
+  const padding = Math.ceil(fontPx * 0.42) + 10;
+  const advanceTotal = advances.reduce((sum, value) => sum + value, 0);
+  const widthPx = Math.ceil(advanceTotal + spacingPx * Math.max(0, chars.length - 1)) + padding * 2;
+  const heightPx = Math.ceil(fontPx * 1.85) + padding * 2;
+  const baseline = padding + fontPx * 1.25;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(8, widthPx);
+  canvas.height = Math.max(8, heightPx);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `${fontPx}px ${fontSpec}`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#000";
+  let cursor = padding;
+  for (let i = 0; i < chars.length; i += 1) {
+    ctx.fillText(chars[i], cursor, baseline);
+    cursor += advances[i] + spacingPx;
+  }
+
+  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let minX = canvas.width;
+  let maxX = -1;
+  let minY = canvas.height;
+  let maxY = -1;
+  for (let y = 0; y < canvas.height; y += 1) {
+    for (let x = 0; x < canvas.width; x += 1) {
+      const alpha = image.data[(y * canvas.width + x) * 4 + 3];
+      if (alpha > 80) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return { error: "当前文字没有可见像素" };
+
+  const cropWidth = maxX - minX + 1;
+  const cropHeight = maxY - minY + 1;
+  const binary = new Uint8Array(cropWidth * cropHeight);
+  for (let y = 0; y < cropHeight; y += 1) {
+    for (let x = 0; x < cropWidth; x += 1) {
+      const alpha = image.data[((y + minY) * canvas.width + (x + minX)) * 4 + 3];
+      if (alpha > 80) binary[y * cropWidth + x] = 1;
+    }
+  }
+
+  const skeleton = skeletonize(binary, cropWidth, cropHeight);
+  const pixelPaths = skeletonPaths(skeleton, cropWidth, cropHeight);
+
+  const offsetX =
+    align === "center" ? -textWidthModel * 0.5 : align === "right" ? -textWidthModel : 0;
+  const pixelToModel = (index) => {
+    const x = index % cropWidth;
+    const y = (index - x) / cropWidth;
+    return {
+      x: (minX + x + 0.5 - padding) / scale + offsetX + anchor.x,
+      y: (baseline - (minY + y + 0.5)) / scale,
+    };
+  };
+
+  const tolerance = Math.max(
+    0.5 / scale,
+    fontSize * (0.001 + 0.014 * smoothness)
+  );
+  const passes = Math.round(2 * smoothness);
+  const paths = [];
+  for (const pixelPath of pixelPaths) {
+    let points = dedupePoints(pixelPath.map(pixelToModel));
+    if (points.length < 2) continue;
+    const closed = dist(points[0], points[points.length - 1]) <= 1e-9;
+    const simplified = closed
+      ? simplifyClosedPath(points, tolerance)
+      : simplifyPath(points, tolerance);
+    if (simplified.length < 2) continue;
+    paths.push(smoothPath(simplified, passes));
+  }
+
+  const covered = new Set();
+  for (const path of pixelPaths) for (const index of path) covered.add(index);
+  const isolated = [];
+  for (let i = 0; i < skeleton.length; i += 1) {
+    if (skeleton[i] && !covered.has(i)) isolated.push(i);
+  }
+  const half = Math.max(1 / scale, fontSize * 0.01) * 0.5;
+  for (const index of isolated) {
+    const point = pixelToModel(index);
+    paths.push([
+      { x: point.x - half, y: point.y },
+      { x: point.x + half, y: point.y },
+    ]);
+  }
+
+  if (!paths.length) return { error: "未提取到骨架" };
+
+  const minimumY = Math.min(...paths.flat().map((point) => point.y));
+  const shiftY = anchor.y - minimumY;
+  const shifted = paths.map((path) =>
+    path.map((point) => ({ x: point.x, y: point.y + shiftY }))
+  );
+
+  const jitter = Math.max(1 / scale * 0.75, fontSize * 0.0005);
+  const lines = [];
+  for (const path of shifted) {
+    lines.push(...splitMonotonic(path, jitter));
+  }
+
+  return {
+    lines,
+    meta: {
+      scale,
+      rasterWidth: cropWidth,
+      rasterHeight: cropHeight,
+      textWidth: textWidthModel,
+    },
+  };
+}
+
+function renderText() {
+  const { ctx, width, height } = setupCanvas($("text-canvas"));
+  const text = $("text-value").value;
+  const typedFont = $("text-font").value.trim();
+  if (!customFontFamily && typedFont.includes(",")) {
+    setStats("text-stats", "字体只能填写一个名称，不要使用逗号分隔的字体列表。", true);
+    showOutput("text-output", []);
+    return;
+  }
+  const fontFamily = activeTextFontFamily();
+  const align = $("text-align").value;
+  const anchor = { x: num("text-x", 0), y: num("text-y", 0) };
+  const fontSize = num("text-size", 0.2);
+  const spacingEm = num("text-spacing", 0.02);
+  const smoothness = clamp(num("text-smooth", 0.5), 0, 1);
+  $("text-smooth-value").textContent = smoothness.toFixed(2);
+
+  const result = buildTextSkeleton(
+    text,
+    fontFamily,
+    align,
+    anchor,
+    fontSize,
+    spacingEm,
+    smoothness
+  );
+  if (result.error) {
+    setStats("text-stats", result.error, true);
+    showOutput("text-output", []);
+    drawAnchorOnly(ctx, width, height, anchor);
+    return;
+  }
+
+  const allPoints = result.lines.flat().concat([anchor]);
+  const view = fitView(allPoints, width, height, 58);
+  drawGrid(ctx, width, height, view);
+
+  // Skeleton lines
+  ctx.save();
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 1.8;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  for (const line of result.lines) {
+    ctx.beginPath();
+    line.forEach((point, index) => {
+      const x = view.sx(point.x);
+      const y = view.sy(point.y);
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Nodes
+  ctx.save();
+  ctx.fillStyle = "#dc2626";
+  for (const line of result.lines) {
+    for (const point of line) {
+      ctx.beginPath();
+      ctx.arc(view.sx(point.x), view.sy(point.y), 2.7, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // Anchor
+  const anchorScreen = { x: view.sx(anchor.x), y: view.sy(anchor.y) };
+  ctx.save();
+  ctx.strokeStyle = "#059669";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(anchorScreen.x - 9, anchorScreen.y);
+  ctx.lineTo(anchorScreen.x + 9, anchorScreen.y);
+  ctx.moveTo(anchorScreen.x, anchorScreen.y - 9);
+  ctx.lineTo(anchorScreen.x, anchorScreen.y + 9);
+  ctx.stroke();
+  ctx.fillStyle = "#047857";
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.fillText("锚点", anchorScreen.x + 12, anchorScreen.y - 10);
+  ctx.restore();
+
+  const nodeCount = result.lines.reduce((sum, line) => sum + line.length, 0);
+  setStats(
+    "text-stats",
+    `${result.lines.length} 条线 · ${nodeCount} 个节点 · 栅格 ${result.meta.rasterWidth}×${result.meta.rasterHeight}`
+  );
+  showOutput(
+    "text-output",
+    result.lines.map((line) => line.map((point) => ({ x: round4(point.x), y: round4(point.y) })))
+  );
+}
+
+function drawAnchorOnly(ctx, width, height, anchor) {
+  const view = fitView([anchor], width, height, 58);
+  drawGrid(ctx, width, height, view);
+  const x = view.sx(anchor.x);
+  const y = view.sy(anchor.y);
+  ctx.save();
+  ctx.strokeStyle = "#059669";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x - 9, y);
+  ctx.lineTo(x + 9, y);
+  ctx.moveTo(x, y - 9);
+  ctx.lineTo(x, y + 9);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ======================= 交互与调度 ======================= */
+function setActivePanel(name) {
+  document.querySelectorAll(".tab").forEach((button) => {
+    button.classList.toggle("active", button.dataset.panel === name);
+  });
+  document.querySelectorAll(".panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `panel-${name}`);
+  });
+  if (location.hash.slice(1) !== name) {
+    history.replaceState(null, "", `#${name}`);
+  }
+  if (name === "ease") renderEase();
+  if (name === "fill") renderFill();
+  if (name === "text") renderText();
+}
+
+let easeTimer = 0;
+let fillTimer = 0;
+let textTimer = 0;
+
+function scheduleEase() {
+  clearTimeout(easeTimer);
+  easeTimer = setTimeout(renderEase, 80);
+}
+function scheduleFill() {
+  clearTimeout(fillTimer);
+  fillTimer = setTimeout(renderFill, 80);
+}
+function scheduleText() {
+  clearTimeout(textTimer);
+  textTimer = setTimeout(renderText, 220);
+}
+
+function updateEasePrecision(forceDefault = false) {
+  const strategy = $("ease-strategy").value;
+  const input = $("ease-precision");
+  if (strategy === "uniform" || strategy === "arc" || strategy === "curvature") {
+    input.min = "1";
+    input.step = "1";
+    if (forceDefault || !(Number(input.value) >= 1)) input.value = "3";
+    $("ease-hint").textContent = "precision = 插入节点数量";
+  } else {
+    input.min = "0.0001";
+    input.step = "0.001";
+    if (forceDefault || !(Number(input.value) > 0 && Number(input.value) < 1)) {
+      input.value = "0.02";
+    }
+    $("ease-hint").textContent = "precision = 归一化误差阈值；直线缓动不会插点";
+  }
+}
+
+function init() {
+  initEaseSelect();
+  updateEasePrecision();
+  updateFillControls();
+
+  document.querySelectorAll(".tab").forEach((button) => {
+    button.addEventListener("click", () => setActivePanel(button.dataset.panel));
+  });
+
+  ["ease-x0", "ease-y0", "ease-x1", "ease-y1", "ease-precision"].forEach((id) => {
+    $(id).addEventListener("input", scheduleEase);
+  });
+  $("ease-type").addEventListener("change", () => {
+    const custom = $("ease-type").value === "custom";
+    $("ease-bezier").classList.toggle("hidden", !custom);
+    scheduleEase();
+  });
+  ["ease-bx1", "ease-by1", "ease-bx2", "ease-by2"].forEach((id) => {
+    $(id).addEventListener("input", scheduleEase);
+  });
+  $("ease-strategy").addEventListener("change", () => {
+    updateEasePrecision(true);
+    scheduleEase();
+  });
+  $("ease-view").addEventListener("change", scheduleEase);
+  $("ease-render").addEventListener("click", renderEase);
+  $("ease-copy").addEventListener("click", () => copyOutput("ease-output"));
+
+  ["fill-points", "fill-cx", "fill-cy", "fill-angle", "fill-precision"].forEach((id) => {
+    $(id).addEventListener("input", scheduleFill);
+  });
+  $("fill-points").addEventListener("input", () => {
+    $("fill-preset").value = "custom";
+  });
+  $("fill-preset").addEventListener("change", () => {
+    applyFillPreset();
+    scheduleFill();
+  });
+  $("fill-style").addEventListener("change", () => {
+    updateFillControls();
+    scheduleFill();
+  });
+  $("fill-render").addEventListener("click", renderFill);
+  $("fill-copy").addEventListener("click", () => copyOutput("fill-output"));
+
+  ["text-value", "text-font", "text-align", "text-x", "text-y", "text-size", "text-spacing"].forEach((id) => {
+    $(id).addEventListener("input", scheduleText);
+  });
+  $("text-font").addEventListener("input", () => {
+    if (!customFontFamily) {
+      const name = $("text-font").value.trim() || "sans-serif";
+      updateFontStatus(`当前：系统字体 ${name}`);
+    }
+  });
+  $("text-font-file").addEventListener("change", (event) => {
+    const file = event.target.files && event.target.files[0];
+    loadTextFontFile(file);
+  });
+  $("text-font-reset").addEventListener("click", resetTextFont);
+  $("text-smooth").addEventListener("input", () => {
+    $("text-smooth-value").textContent = num("text-smooth", 0.5).toFixed(2);
+    scheduleText();
+  });
+  $("text-render").addEventListener("click", renderText);
+  $("text-copy").addEventListener("click", () => copyOutput("text-output"));
+
+  window.addEventListener("resize", () => {
+    const active = document.querySelector(".panel.active");
+    if (active && active.id === "panel-ease") renderEase();
+    if (active && active.id === "panel-fill") renderFill();
+    if (active && active.id === "panel-text") renderText();
+  });
+
+  const initialPanel = ["ease", "fill", "text"].includes(location.hash.slice(1))
+    ? location.hash.slice(1)
+    : "ease";
+  setActivePanel(initialPanel);
+  // Give the browser a moment to settle fonts/layout, then redraw once.
+  setTimeout(() => {
+    if (initialPanel === "ease") renderEase();
+    if (initialPanel === "fill") renderFill();
+    if (initialPanel === "text") renderText();
+  }, 50);
+}
+
+init();
+</script>
+</body>
+</html>

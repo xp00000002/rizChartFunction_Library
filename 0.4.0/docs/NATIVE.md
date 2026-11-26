@@ -59,14 +59,8 @@ bash / zsh：
 RIZCHART_BUILD_NATIVE=OFF python -m pip install -e .
 ```
 
-也可以直接通过 scikit-build-core 的配置项关闭：
-
-```bash
-python -m pip install -e . --config-settings=cmake.define.RIZCHART_BUILD_NATIVE=OFF
-```
-
-纯 Python 构建仍然需要安装 CMake、Ninja 等构建工具，因为项目使用
-`scikit-build-core` 作为构建后端；只是不再需要 C++ 编译器。
+关闭 native 后使用纯 Python 构建路径，不需要 CMake、Ninja 或 C++ 编译器。
+构建系统只准备 `setuptools`、`wheel` 和 `pybind11` 这类 Python 构建依赖。
 
 ## 检查是否启用
 
@@ -89,17 +83,16 @@ print(_native.native_error())
 | 项目 | 要求 |
 | --- | --- |
 | Python | `>=3.10` |
-| C++ | C++17 |
-| CMake | `>=3.15` |
-| Ninja | `>=1.11` |
+| setuptools | `>=68` |
+| wheel | 任意兼容版本 |
 | pybind11 | `>=2.12` |
-| scikit-build-core | `>=0.10` |
-| Windows | MSVC 2022 Build Tools 或同等 Visual Studio C++ 工具链 |
-| Linux | GCC 9+ 或 Clang 12+ |
-| macOS | Xcode Command Line Tools / Clang |
+| C++（仅 native） | C++17 |
+| Windows（仅 native） | MSVC 2022 Build Tools 或同等 Visual Studio C++ 工具链 |
+| Linux（仅 native） | GCC 9+ 或 Clang 12+ |
+| macOS（仅 native） | Xcode Command Line Tools / Clang |
 
-这些构建依赖由 `pyproject.toml` 的 `[build-system]` 自动准备。普通用户不需要
-手动安装 pybind11、CMake 或 Ninja。
+这些构建依赖由 `pyproject.toml` 的 `[build-system]` 自动准备。纯 Python 模式
+不需要 C++ 工具链、CMake 或 Ninja；native 模式需要对应平台的 C++17 编译器。
 
 ## 构建 wheel / sdist
 
@@ -113,21 +106,17 @@ python -m pip wheel . --no-deps -w dist
 
 ```powershell
 $env:RIZCHART_BUILD_NATIVE = "OFF"
-$env:SKBUILD_WHEEL_PLATLIB = "false"
 python -m pip wheel . --no-deps -w dist-pure
 Remove-Item Env:RIZCHART_BUILD_NATIVE
-Remove-Item Env:SKBUILD_WHEEL_PLATLIB
 ```
 
 ```bash
 # bash / zsh
-RIZCHART_BUILD_NATIVE=OFF SKBUILD_WHEEL_PLATLIB=false \
-  python -m pip wheel . --no-deps -w dist-pure
+RIZCHART_BUILD_NATIVE=OFF python -m pip wheel . --no-deps -w dist-pure
 ```
 
-`SKBUILD_WHEEL_PLATLIB=false` 让纯 Python wheel 使用 `py3-none-any` 标签。
-native wheel 与操作系统、CPU 架构、CPython ABI 绑定；纯 Python wheel 不绑定
-这些条件。
+纯 Python wheel 使用 `py3-none-any` 标签，不绑定操作系统或 CPython ABI。
+native wheel 与操作系统、CPU 架构和 CPython ABI 绑定，需要按目标平台构建。
 
 ## 回退路径
 

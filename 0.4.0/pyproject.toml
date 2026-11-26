@@ -1,28 +1,17 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.10",
+    "setuptools>=68",
+    "wheel",
     "pybind11>=2.12",
-    "cmake>=3.15",
-    "ninja>=1.11",
 ]
-build-backend = "scikit_build_core.build"
+build-backend = "setuptools.build_meta"
 
-[tool.scikit-build]
-wheel.packages = ["src/rizChartFunction"]
-cmake.source-dir = "."
-sdist.include = [
-    "CMakeLists.txt",
-    "cpp/**",
-    "README.md",
-]
-sdist.exclude = [
-    "benchmarks/_output/**",
-    "**/__pycache__/**",
-    "**/*.py[cod]",
-    "**/*.pyd",
-    "**/*.so",
-    "**/*.dylib",
-]
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["rizChartFunction*"]
 
 [project]
 name = "rizchartfunction"

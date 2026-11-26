@@ -1,5 +1,9 @@
 # C++ 加速开发计划
 
+> 说明：本文件保留开发阶段记录。0.4.0 的安装构建后端已从
+> `scikit-build-core` 改为 setuptools + `setup.py`；纯 Python 安装不再需要
+> CMake、Ninja 或 C++ 编译器。
+
 > 目标：在不改变现有公开 API、谱面 dict 结构、异常语义和纯 Python 回退能力的前提下，将高开销的数值计算和批量绘图采样迁移到可选 C++ 扩展。
 
 ## 当前状态

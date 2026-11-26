@@ -1,0 +1,6 @@
+include README.md
+include CMakeLists.txt
+recursive-include cpp *.cpp *.cc *.cxx *.h *.hpp
+recursive-include src/rizChartFunction/locales *.json
+global-exclude __pycache__/* *.py[cod] *.pyd *.so *.dylib
+recursive-exclude benchmarks/_output *

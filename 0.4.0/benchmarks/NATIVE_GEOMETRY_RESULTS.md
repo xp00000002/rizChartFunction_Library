@@ -1,11 +1,14 @@
 # 阶段 1-4：C++ 几何加速验证结果
 
+> 构建后端后来改为 setuptools + `setup.py`；纯 Python 安装不再需要
+> CMake、Ninja 或 C++ 编译器。下面的性能结果仍是同一 native 扩展的验证数据。
+
 ## 已实现
 
 - `0.4.0/CMakeLists.txt`
 - `0.4.0/cpp/src/rizchart_native.cpp`
 - `0.4.0/src/rizChartFunction/_native.py`
-- `pybind11 + scikit-build-core` 构建配置
+- `pybind11 + setuptools/setup.py` 构建配置
 
 原生扩展：
 

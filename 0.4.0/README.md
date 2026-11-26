@@ -36,7 +36,8 @@ python -m pip install -e .
 ```
 
 默认安装会尝试构建可选的 C++ 几何扩展。没有 C++ 编译器时，可以关闭 native
-扩展，库会自动使用纯 Python 实现：
+扩展，库会自动使用纯 Python 实现；纯 Python 安装不需要 CMake、Ninja 或任何
+C++ 工具链：
 
 ```powershell
 $env:RIZCHART_BUILD_NATIVE = "OFF"
@@ -82,9 +83,10 @@ from rizChartFunction import createLinePoint, createRingPoint, createNote
 - Python：`>=3.10`
 - 运行时核心：Python 标准库
 - 可选字体依赖：`fontTools`、`shapely`、`numpy`、`Pillow`、`scikit-image`
-- 可选 native 构建：C++17、CMake `>=3.15`、Ninja `>=1.11`、
-  pybind11 `>=2.12`、scikit-build-core `>=0.10`
-- 无 native 扩展时：自动回退纯 Python
+- 构建后端：`setuptools>=68`、`wheel`、`pybind11>=2.12`
+- 可选 native 构建：C++17 编译器（Windows 使用 MSVC，Linux 使用 GCC/Clang，
+  macOS 使用 Xcode Command Line Tools）
+- 关闭 native 时：纯 Python 安装不需要 C++ 编译器、CMake 或 Ninja
 
 可选依赖已经在 `pyproject.toml` 的 `font` 组中声明：
 
@@ -153,7 +155,9 @@ rcf.export(chart, "chart.json")
 │   ├── chart-parameter-visualizer.html
 │   └── smoke_test.py           # 安装后的 native/回退 smoke test
 │
-├── CMakeLists.txt              # 可选 native 构建入口
+├── setup.py                    # setuptools native/纯 Python 构建开关
+├── MANIFEST.in                 # sdist 中的 C++ 源文件
+├── CMakeLists.txt              # 保留的手动 CMake 构建入口
 ├── CPP_PLAN.md                 # C++ 加速开发计划与阶段记录
 ├── pyproject.toml              # 项目与依赖声明
 └── README.md
